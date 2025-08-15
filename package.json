@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
+    "@slack/web-api": "^7.9.3",
     "axios": "^1.9.0",
     "cheerio": "^1.0.0",
     "express": "^5.1.0",
