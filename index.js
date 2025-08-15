@@ -10,6 +10,8 @@ import { SocksProxyAgent } from 'socks-proxy-agent';
 import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { WebClient } from '@slack/web-api';
+
+
 const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
 const slackclient = new WebClient(token);
 const proxy_errorlId = 'C09B72958BS';
@@ -543,5 +545,5 @@ app.listen(PORT, () => {
 
 setInterval(async () => {
   console.log("Run")
-  await axios.get('http://localhost:3000/once_run')
+  await axios.get('http://test-omega-blond-96.vercel.app/once_run')
 }, 1000 * 10 * 1);//
