@@ -538,9 +538,9 @@ app.get('/once_run', async (req, res) => {
   });
 })
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
 
 // setInterval(async () => {
 //   console.log("Run")
