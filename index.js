@@ -177,7 +177,7 @@ async function scrapeLinkedinProfiles(url) {
     const targetH2 = allH2s.find(h2 => $(h2).text().toLowerCase().includes('associated members'));
     const elementText = $('.face-pile__text').text(); // Get text inside the <p>
     const numberMatch = elementText.match(/\d+/);
-    const number = numberMatch ? parseInt(numberMatch[0], 10) : null;
+    const number = numberMatch ? parseInt(numberMatch[0].replace(/,/g, ''), 10) : null;
 
     return {
       designation,
