@@ -543,7 +543,17 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-setInterval(async () => {
-  console.log("Run")
-  await axios.get('http://test-omega-blond-96.vercel.app/once_run')
-}, 1000 * 10 * 1);//
+// setInterval(async () => {
+//   console.log("Run")
+//   await axios.get('http://test-omega-blond-96.vercel.app/once_run')
+// }, 1000 * 10 * 1);//
+await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
+const start = Date.now();
+let jobs1 = 0;
+jobs1 = await fetchAndParseJobs();
+const end = Date.now();
+res.json({
+  count: jobs1.length || 0,
+  time: (end - start) / 1000,
+  body: jobs1
+});
