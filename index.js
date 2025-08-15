@@ -365,7 +365,6 @@ async function fetchJob_list(index) {
     let jobsElem = [];
     let currenttime = new Date()
     if (Array.from(jobCards).length == 0) {
-      console.log("---", apiUrl)
       return { len: 0, datas: [], state: 2 }
     }
     for (let i = 0; i < Array.from(jobCards).length; i++) {
