@@ -552,8 +552,8 @@ const start = Date.now();
 let jobs1 = 0;
 jobs1 = await fetchAndParseJobs();
 const end = Date.now();
-res.json({
+console.log({
   count: jobs1.length || 0,
   time: (end - start) / 1000,
-  body: jobs1
-});
+  // body: jobs1
+})
