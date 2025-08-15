@@ -5,8 +5,6 @@ import randomUseragent from 'random-useragent';
 import fs from 'fs';
 import { load } from 'cheerio';
 import mongoose from 'mongoose';
-import { Console, error } from 'console';
-import { SocksProxyAgent } from 'socks-proxy-agent';
 import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { WebClient } from '@slack/web-api';
@@ -37,8 +35,13 @@ const timeSchema = new mongoose.Schema({
   time_text: String
 }, { timestamps: true })
 
+const blockcom = new mongoose.Schema({
+  blockcompany: String
+})
+
 const Job = mongoose.model('jobs', jobSchema);
 const timeSch = mongoose.model("time", timeSchema);
+const Blockcompanies = mongoose.model("blockcompanies", blockcom);
 
 const uri = 'mongodb+srv://bl:dbpassword@cluster0.srbit0j.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0';
 
@@ -133,7 +136,8 @@ const userAgents = [
   "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1"
 ];
 
-const cutcompanies = ["Lensa", "Oracle", "Wiraa"];
+const comap = await Blockcompanies.find();
+let cutcompanies = comap.map(c => c.blockcompany);
 
 async function scrapeLinkedinProfiles(url) {
   try {
