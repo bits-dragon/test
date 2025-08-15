@@ -556,3 +556,4 @@ console.log({
   time: (end - start) / 1000,
   // body: jobs1
 })
+await mongoose.disconnect();
