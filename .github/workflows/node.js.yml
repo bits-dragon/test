@@ -3,8 +3,6 @@ name: Run index.js every 3 minutes
 on:
   schedule:
     - cron: "*/3 * * * *" # every 3 minutes
-  workflow_dispatch:
-
 jobs:
   run-node:
     runs-on: windows-latest
