@@ -11,7 +11,7 @@ import { WebClient } from '@slack/web-api';
 
 
 const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
-const token1 = 'xoxb-8840923140053-9365248833524-EDMfsBYMceFEeYdNZ6oxrwX2';
+const token1 = 'xoxb-8840923140053-9365248833524-EDMfsio8pBYMceFEeYdNZ6oxrwX2';
 const slackclient = new WebClient(token1);
 const proxy_errorlId = 'C09B72958BS';
 const jobsId = "C09AFMB5MV1"
@@ -179,7 +179,7 @@ async function scrapeLinkedinProfiles(url) {
     const allH2s = $('h2').toArray();
     const targetH2 = allH2s.find(h2 => $(h2).text().toLowerCase().includes('associated members'));
     const elementText = $('.face-pile__text').text(); // Get text inside the <p>
-    const numberMatch = elementText.match(/\d+/);
+    const numberMatch = elementText.match(/\d[\d,]*/);
     const number = numberMatch ? parseInt(numberMatch[0].replace(/,/g, ''), 10) : null;
 
     return {
