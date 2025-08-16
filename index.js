@@ -532,7 +532,7 @@ async function fetchAndParseJobs() {
 
     return resul;//
   } catch (error) {
-
+    return [];
   }
 }
 
@@ -593,7 +593,7 @@ app.get('/giveme', async (req, res) => {
 app.get('/once_run', async (req, res) => {
   await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
   const start = Date.now();
-  let jobs1 = 0;
+  let jobs1 = [];
   jobs1 = await fetchAndParseJobs();
   const end = Date.now();
   res.json({
