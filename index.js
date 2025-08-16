@@ -11,8 +11,11 @@ import { WebClient } from '@slack/web-api';
 
 
 const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
-const slackclient = new WebClient(token);
+const token1 = 'xoxb-8840923140053-9365248833524-xpGdjxBnL43wEJCm7BwExLIr';
+const slackclient = new WebClient(token1);
 const proxy_errorlId = 'C09B72958BS';
+const jobsId = "C09AFMB5MV1"
+
 
 
 //---------------------------------mongodb---------------
@@ -443,6 +446,63 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
+      const result = await slackclient.chat.postMessage({
+        channel: jobsId,
+        blocks: [
+          // Header with job title
+          {
+            type: "header",
+            text: {
+              type: "plain_text",
+              text: job.title,
+              emoji: true
+            }
+          },
+          // Section with company info, logo, location, designation
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `*Company:* <${job.companyLink}|${job.company}>\n*Location:* ${job.location}\n*Designation:* ${job.designation}`
+            },
+            accessory: {
+              type: "image",
+              image_url: job.companylog,
+              alt_text: "company logo"
+            }
+          },
+          // Context with post info, followers, employees
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: `Posted: ${job.postTime} | Followers: ${job.followersCount.toLocaleString()} | Employees: ${job.e_count}`
+              }
+            ]
+          },
+          // Divider
+          {
+            type: "divider"
+          },
+          // Button to view job
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: "View Job Posting",
+                  emoji: true
+                },
+                url: job.joblink,
+                style: "primary"
+              }
+            ]
+          }
+        ]
+      })
     }
     reults.push(jobCards[i])
 
@@ -550,6 +610,7 @@ app.get('/once_run', async (req, res) => {
 //   console.log("Run")
 //   await axios.get('http://test-omega-blond-96.vercel.app/once_run')
 // }, 1000 * 10 * 1);//
+
 await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
 const start = Date.now();
 let jobs1 = 0;
