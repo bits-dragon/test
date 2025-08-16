@@ -620,6 +620,6 @@ const end = Date.now();
 console.log({
   count: jobs1.length || 0,
   time: (end - start) / 1000,
-  // body: jobs1
+  start,end
 })
 await mongoose.disconnect();
