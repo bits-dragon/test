@@ -5,9 +5,18 @@ import randomUseragent from 'random-useragent';
 import fs from 'fs';
 import { load } from 'cheerio';
 import mongoose from 'mongoose';
-import { Console, error } from 'console';
-import { SocksProxyAgent } from 'socks-proxy-agent';
 import axios from 'axios';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { WebClient } from '@slack/web-api';
+
+
+const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
+const token1 = 'xoxb-8840923140053-9365248833524-xpGdjxBnL43wEJCm7BwExLIr';
+const slackclient = new WebClient(token1);
+const proxy_errorlId = 'C09B72958BS';
+const jobsId = "C09AFMB5MV1"
+
+
 
 //---------------------------------mongodb---------------
 const jobSchema = new mongoose.Schema({
@@ -22,12 +31,75 @@ const jobSchema = new mongoose.Schema({
   location: String,
   companyLink: String,
   postId: { type: String, required: true, unique: true },
+  companylog: String,
 }, { timestamps: true }); // adds createdAt and updatedAt
 
+const timeSchema = new mongoose.Schema({
+  time_text: String
+}, { timestamps: true })
+
+const blockcom = new mongoose.Schema({
+  blockcompany: String
+})
+
 const Job = mongoose.model('jobs', jobSchema);
+const timeSch = mongoose.model("time", timeSchema);
+const Blockcompanies = mongoose.model("blockcompanies", blockcom);
 
 const uri = 'mongodb+srv://bl:dbpassword@cluster0.srbit0j.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0';
 
+const proxyList = [
+  "185.162.231.237:80",
+  "199.34.230.33:80",
+  "141.101.120.37:80",
+  "104.18.197.95:80",
+  "103.169.142.220:80",
+  "46.254.92.45:80",
+  "45.131.210.34:80",
+  "31.43.179.72:80",
+  "185.193.28.117:80",
+  "198.41.200.188:80",
+  "209.46.30.36:80",
+  "104.254.140.37:80",
+  "45.131.211.148:80",
+  "104.16.0.24:80",
+  "172.64.146.52:80",
+  "103.169.142.67:80",
+  "5.182.34.226:80",
+  "104.27.26.183:80",
+  "46.254.93.247:80",
+  "188.42.88.117:80",
+  "104.24.52.64:80",
+  "188.42.89.205:80",
+  "45.159.217.34:80",
+  "45.131.211.179:80",
+  "185.162.228.93:80",
+  "104.21.84.213:80",
+  "172.67.204.84:80",
+  "104.17.49.44:80",
+  "45.80.108.174:80",
+  "185.193.29.180:80",
+  "103.160.204.102:80",
+  "185.162.231.239:80",
+  "45.131.211.200:80",
+  "23.227.39.242:80",
+  "45.131.208.222:80",
+  "23.227.60.173:80",
+  "162.159.242.59:80",
+  "195.85.23.191:80",
+  "104.16.242.74:80",
+  "104.17.6.160:80",
+  "209.46.30.130:80",
+  "46.254.93.11:80",
+  "104.16.246.160:80",
+  "103.21.244.184:80",
+  "104.24.229.222:80",
+  "172.67.221.10:80",
+  "185.162.230.116:80",
+  "104.239.72.87:80",
+  "182.253.37.83:443",
+  "172.64.85.92:80"
+];
 
 await mongoose.connect(uri)
   .then(() => console.log('MongoDB connected'))
@@ -37,6 +109,15 @@ await mongoose.connect(uri)
 const app = express();
 const PORT = 3000;
 
+app.use(express.json());
+
+app.get('/test', (req, res) => {
+  res.json({ msg: " successfully deployed " });
+  setTimeout(() => {
+    console.log("executed repeteadly")
+  }, 3000);
+
+})
 
 
 //---------------------------------------------------------------------------------
@@ -58,7 +139,8 @@ const userAgents = [
   "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1"
 ];
 
-const cutcompanies = ["Lensa", "Oracle", "Wiraa"];
+const comap = await Blockcompanies.find();
+let cutcompanies = comap.map(c => c.blockcompany);
 
 async function scrapeLinkedinProfiles(url) {
   try {
@@ -98,7 +180,7 @@ async function scrapeLinkedinProfiles(url) {
     const targetH2 = allH2s.find(h2 => $(h2).text().toLowerCase().includes('associated members'));
     const elementText = $('.face-pile__text').text(); // Get text inside the <p>
     const numberMatch = elementText.match(/\d+/);
-    const number = numberMatch ? parseInt(numberMatch[0], 10) : null;
+    const number = numberMatch ? parseInt(numberMatch[0].replace(/,/g, ''), 10) : null;
 
     return {
       designation,
@@ -183,10 +265,24 @@ async function getPosttime(link) {
   }
 }
 
-
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+async function axiosGetWithRetry(url, headers, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const proxyUrl = `http://${proxyList[Math.floor(Math.random() * proxyList.length)]}`;
+      const agent = new HttpsProxyAgent(proxyUrl);
+      const res = await axios.get(url, {
+        headers,
+        // httpAgent: agent,
+        timeout: 5000
+      });
+      console.log(res.status)
+      return res;
+    } catch (err) {
+      console.log(`Axios attempt ${i + 1} failed: ${err.code} ${err.message}`);
+      if (i === retries - 1) throw err;
+      await new Promise(r => setTimeout(r, 700)); // wait 1 sec before retry
+    }
+  }
 }
 
 function extractPostId(url) {
@@ -238,50 +334,63 @@ async function fetchJob_list(index) {
     "Connection": "keep-alive",
     // optionally add cookies if you have authenticated session cookies
   };
-  const apiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Full%20Stack%20OR%20frontend%20OR%20backend%20OR%20javascript%20OR%20python&geoId=103644278&f_TPR=r86400&f_WT=2&start=${index}`;
+  const apiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=developer%20or%20engineer&geoId=103644278&f_TPR=r600&f_WT=2&start=${index}`;
+  // const apiUrl = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=developer%20or%20engineer&f_TPR=r86400&f_WT=2&geoId=103644278&origin=JOB_SEARCH_PAGE_JOB_FILTER&refresh=true&sortBy=DD&start=${index}'
   // &f_JIYN=true
   //keywords=Full%20Stack%20OR%20frontend%20OR%20backend%20OR%20javascript%20OR%20python
   try {
     // const proxy = {
-    //   host: '81.161.5.236',
+    //   host: '81.161.5.236',  
     //   port: 19117,
     //   auth: {
     //     username: 'matwilland',
     //     password: 'RrHb4GAf8V'
     //   }
     // };//
-    // const proxy1 = 'socks5://realalien1111_country-us:R18Z6wBZ9paB2mKS@geo.iproyal.com:32325';
-    // const agent = new SocksProxyAgent(proxy1);
+    const proxyUrl = `http://${proxyList[Math.floor(Math.random() * proxyList.length)]}`;
+    const agent = new HttpsProxyAgent(proxyUrl);
 
-    const response = await axios.get(apiUrl);
+    // const proxy1 = 'socks5://realalien1111_country-us:R18Z6wBZ9paB2mKS@geo.iproyal.com:32325';
+    // const agent1 = new SocksProxyAgent(proxy1);
+
+    // const response = await axios.get(apiUrl, {
+    //   httpAgent: agent,
+    //   headers
+    // });
+    const response = await axiosGetWithRetry(apiUrl, headers);
+
     if (response.status != 200) {
-      const errorText = await response.data;
       console.error('Response body: failed', response.status);
-      return [];
+      return { len: 0, datas: [], state: 0 };
     }//
     console.log(`Fetching jobs at start=${index}, status=${response.status}`);
 
     const htmlText = await response.data;
     const dom = new JSDOM(htmlText);
     const doc = dom.window.document;
-
     const jobCards = doc.querySelectorAll('li > div.base-card');
     let jobsElem = [];
     let currenttime = new Date()
-
+    if (Array.from(jobCards).length == 0) {
+      return { len: 0, datas: [], state: 2 }
+    }
     for (let i = 0; i < Array.from(jobCards).length; i++) {
       const card = Array.from(jobCards)[i];
-      // console.log(i)
+      console.log(i)
 
       const titleElem = card.querySelector('[class*="_title"]');
       const urlElem = card.querySelector('a.base-card__full-link');
       const companyElem = card.querySelector('[class*="_subtitle"] a');
       const locationElem = card.querySelector('[class*="_location"]');
       const postTimeElem = card.querySelector('[class*=listdate]');
+      const imgElem = card.querySelector('.search-entity-media img');
+
       let postTime = postTimeElem ? postTimeElem.textContent.trim() : null
       let company = companyElem ? companyElem.textContent.trim() : null
       let url = urlElem ? urlElem.href : null;
       let joblink = null;
+      let companylog = imgElem ? imgElem.getAttribute('data-delayed-url') : null;
+
       if (url) {
         let urlObj = new URL(url);
         joblink = urlObj.origin + urlObj.pathname;
@@ -308,16 +417,16 @@ async function fetchJob_list(index) {
           companyLink, postedtime,
           location: locationElem ? locationElem.textContent.trim() : null,
           postId,
-
+          companylog
         };
         jobsElem.push(fin);
       }
     }
 
-    return jobsElem;
-
+    return { len: Array.from(jobCards).length, datas: jobsElem, state: 1 };
   } catch (error) {
-    return [];
+    console.log("error1");
+    return { len: 0, datas: [], state: 0 };
   }
 }
 
@@ -337,6 +446,64 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
+      const result = await slackclient.chat.postMessage({
+        channel: jobsId,
+        blocks: [
+          // Header with job title
+          {
+            type: "header",
+            text: {
+              type: "plain_text",
+              text: job.title,
+              emoji: true
+            }
+          },
+          // Section with company info, logo, location, designation
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `*Company:* <${job.companyLink}|${job.company}>\n*Location:* ${job.location}\n*Designation:* ${job.designation}`
+            },
+            accessory: {
+              type: "image",
+              image_url: job.companylog,
+              alt_text: "company logo"
+            }
+          },
+          // Context with post info, followers, employees
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: `Posted: ${job.postTime} | Followers: ${job.followersCount.toLocaleString()} | Employees: ${job.e_count}`
+              }
+            ]
+          },
+          // Divider
+          {
+            type: "divider"
+          },
+          // Button to view job
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: "View Job Posting",
+                  emoji: true
+                },
+                url: job.joblink,
+                style: "primary"
+              }
+            ]
+          }
+        ]
+      })
+      console.log(result)
     }
     reults.push(jobCards[i])
 
@@ -344,28 +511,115 @@ async function fetchJob_job(jobCards) {
   return reults;
 }
 
-async function fetchAndParseJobs(cnt) {
+async function fetchAndParseJobs() {
   try {
     let jobCards = []
 
-    for (let i = 0; i < cnt; i++) {
-      let resu = await fetchJob_list(i * 25);
-      delay(100);
-      jobCards.push(...resu);
+    let i = 0;
+    while (1) {
+      let resu = await fetchJob_list(i);
+      if (resu.state == 1) {
+        i = i + resu.len
+        jobCards.push(...resu.datas);
+      }
+      if (resu.state == 2 || resu.state == 0) break;
+      // console.log("fetch job list length", resu.len)
     }
     jobCards.sort((a, b) => parsePostTimeToMinutes(a.postTime) - parsePostTimeToMinutes(b.postTime));
-    console.log("job", jobCards.length)
+    console.log("fetch job list length", jobCards.length)
 
     let resul = await fetchJob_job(jobCards);
 
     return resul;//
   } catch (error) {
+
   }
 }
 
 
-fetchAndParseJobs(20);
+async function oneScrap() {
+
+  let jobs1 = await fetchAndParseJobs(15);
+  fs.writeFileSync('1.json', JSON.stringify(jobs1, null, 2), 'utf-8');
+  return jobs1;
+}
+// oneScrap()
+app.get('/one', async (req, res) => {
+  const start = Date.now();
+  let jobs1 = 0;
+  jobs1 = await fetchAndParseJobs(req.query.q);
+  const end = Date.now();
+  res.json({
+    count: jobs1.length || 0,
+    time: (end - start) / 1000,
+    body: jobs1
+  });
+})
+// fetchAndParseJobs(20);
+
+app.get('/location', async (req, res) => {
+  let result = await fetch('https://ipinfo.io/json')
+  result = await result.json();
+  console.log(result);
+  res.json(
+    result
+  );//
+})
 
 
 
 
+app.get('/status', async (req, res) => {
+  res.json({ status })
+})
+
+
+app.get('/giveme', async (req, res) => {
+  console.log("/giveme")
+  try {
+    // Fetch jobs sorted by postedtime descending, limit 100
+    const jobs = await Job.find()
+      .sort({ postedtime: -1 })  // descending order
+      .limit(100)
+      .exec();
+
+    res.json({ count: jobs.length, jobs });
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/once_run', async (req, res) => {
+  await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
+  const start = Date.now();
+  let jobs1 = 0;
+  jobs1 = await fetchAndParseJobs();
+  const end = Date.now();
+  res.json({
+    count: jobs1.length || 0,
+    time: (end - start) / 1000,
+    body: jobs1
+  });
+})
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+// setInterval(async () => {
+//   console.log("Run")
+//   await axios.get('http://test-omega-blond-96.vercel.app/once_run')
+// }, 1000 * 10 * 1);//
+
+await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
+const start = Date.now();
+let jobs1 = 0;
+jobs1 = await fetchAndParseJobs();
+const end = Date.now();
+console.log({
+  count: jobs1.length || 0,
+  time: (end - start) / 1000,
+  // body: jobs1
+})
+await mongoose.disconnect();
