@@ -503,6 +503,7 @@ async function fetchJob_job(jobCards) {
           }
         ]
       })
+      console.log(result)
     }
     reults.push(jobCards[i])
 
