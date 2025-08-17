@@ -451,7 +451,7 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
-      const botItem = tokens.find(bot => bot.botname === 'MyjobBot');
+      const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
       const slackclient = new WebClient(botItem.token);
       const result = await slackclient.chat.postMessage({
         channel: botItem.channelId,
@@ -610,6 +610,9 @@ app.get('/once_run', async (req, res) => {
   });
 })
 app.get('/test_slack', async (req, res) => {
+  const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
+
+  res.json({ botItem })
   try {
     const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
     const slackclient = new WebClient(botItem.token);
