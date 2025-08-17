@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const token = '';
-const token1 = "xoxb-8840923140053-9365248833524-pR4MD55qQKWdakYsVCsCGDGL"; // load from env
+const token1 = "xoxb-8840923140053-9365248833524-R7QndmyA7i1reUCj8un3cEj9"; // load from env
 
 const slackclient = new WebClient(token1);
 const proxy_errorlId = 'C09B72958BS';
