@@ -615,7 +615,7 @@ app.get('/test_slack', async (req, res) => {
     res.json({ result, token1 })
   } catch (err) {
     console.error("Slack API error:", err);
-    res.json({ err, token1: token1 })
+    res.json({ err, token1: "234" })
   }
 })
 
