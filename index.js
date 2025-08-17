@@ -609,9 +609,9 @@ app.get('/once_run', async (req, res) => {
     body: jobs1
   });
 })
-const botItem1 = tokens.find(bot => bot.botname == 'MyjobBot');
 const slackclient1 = new WebClient(botItem.token);
 app.get('/test_slack', async (req, res) => {
+  const botItem1 = tokens.find(bot => bot.botname == 'MyjobBot');
   // const result = await slackclient1.chat.postMessage({
   //   channel: botItem1.channelId,
   //   text: '123',
