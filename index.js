@@ -607,9 +607,9 @@ app.get('/test_slack', async (req, res) => {
   try {
     const result = await slackclient.chat.postMessage({
       channel: jobsId,
-      text: new DateTime().getTime().toString(0),
+      text: 'test',
     });
-    console.log("Message sent:", result.ts);
+    console.log("Message sent:", result);
     res.json({result})
   } catch (err) {
 
@@ -632,7 +632,7 @@ app.listen(PORT, () => {
 // const start = Date.now();
 // let jobs1 = 0;
 // jobs1 = await fetchAndParseJobs();
-// const end = Date.now();
+// const end = Date.now();8
 // console.log({
 //   count: jobs1.length || 0,
 //   time: (end - start) / 1000,
