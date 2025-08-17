@@ -503,7 +503,7 @@ async function fetchJob_job(jobCards) {
           }
         ]
       })
-      console.log(result)
+      console.log('slack api',result);
     }
     reults.push(jobCards[i])
 
