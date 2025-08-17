@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run index.js
-        run: node index.js
+      - name: Run automautor
+        run: node automator.js
         env:
           SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
