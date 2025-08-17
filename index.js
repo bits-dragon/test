@@ -8,16 +8,8 @@ import mongoose from 'mongoose';
 import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { WebClient } from '@slack/web-api';
-import { DateTime } from 'luxon';
-import dotenv from "dotenv";
-dotenv.config();
 
-const token = '';
-const token1 = "xoxb-8840923140053-9365248833524-R7QndmyA7i1reUCj8un3cEj9"; // load from env
 
-const slackclient = new WebClient(token1);
-const proxy_errorlId = 'C09B72958BS';
-const jobsId = "C09AFMB5MV1"
 
 
 
@@ -41,13 +33,21 @@ const timeSchema = new mongoose.Schema({
   time_text: String
 }, { timestamps: true })
 
+
 const blockcom = new mongoose.Schema({
   blockcompany: String
+})
+
+const tokenli = new mongoose.Schema({
+  botname: String,
+  token: String,
+  channelId: String
 })
 
 const Job = mongoose.model('jobs', jobSchema);
 const timeSch = mongoose.model("time", timeSchema);
 const Blockcompanies = mongoose.model("blockcompanies", blockcom);
+const Tokenlist = mongoose.model("tokens", tokenli);
 
 const uri = 'mongodb+srv://bl:dbpassword@cluster0.srbit0j.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0';
 
@@ -144,6 +144,8 @@ const userAgents = [
 
 const comap = await Blockcompanies.find();
 let cutcompanies = comap.map(c => c.blockcompany);
+let tokens = await Tokenlist.find();
+
 
 async function scrapeLinkedinProfiles(url) {
   try {
@@ -449,8 +451,10 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
+      const botItem = tokens.find(bot => bot.botname === 'MyjobBot');
+      const slackclient = new WebClient(botItem.token);
       const result = await slackclient.chat.postMessage({
-        channel: jobsId,
+        channel: botItem.channelId,
         blocks: [
           // Header with job title
           {
