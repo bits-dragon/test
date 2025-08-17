@@ -11,7 +11,7 @@ import { WebClient } from '@slack/web-api';
 
 
 const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
-const token1 = 'xoxb-8840923140053-9365248833524-xpGdjxBnL43wEJCm7BwExLIr';
+const token1 = 'xoxb-8840923140053-9365248833524-EDMfsio8pBYMceFEeYdNZ6oxrwX2';
 const slackclient = new WebClient(token1);
 const proxy_errorlId = 'C09B72958BS';
 const jobsId = "C09AFMB5MV1"
@@ -179,7 +179,7 @@ async function scrapeLinkedinProfiles(url) {
     const allH2s = $('h2').toArray();
     const targetH2 = allH2s.find(h2 => $(h2).text().toLowerCase().includes('associated members'));
     const elementText = $('.face-pile__text').text(); // Get text inside the <p>
-    const numberMatch = elementText.match(/\d+/);
+    const numberMatch = elementText.match(/\d[\d,]*/);
     const number = numberMatch ? parseInt(numberMatch[0].replace(/,/g, ''), 10) : null;
 
     return {
@@ -532,7 +532,7 @@ async function fetchAndParseJobs() {
 
     return resul;//
   } catch (error) {
-
+    return [];
   }
 }
 
@@ -593,7 +593,7 @@ app.get('/giveme', async (req, res) => {
 app.get('/once_run', async (req, res) => {
   await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
   const start = Date.now();
-  let jobs1 = 0;
+  let jobs1 = [];
   jobs1 = await fetchAndParseJobs();
   const end = Date.now();
   res.json({
@@ -603,9 +603,9 @@ app.get('/once_run', async (req, res) => {
   });
 })
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
 
 // setInterval(async () => {
 //   console.log("Run")
@@ -620,6 +620,6 @@ const end = Date.now();
 console.log({
   count: jobs1.length || 0,
   time: (end - start) / 1000,
-  // body: jobs1
+  start,end
 })
 await mongoose.disconnect();
