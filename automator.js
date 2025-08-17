@@ -13,7 +13,7 @@ import { WebClient } from '@slack/web-api';
 const token = '';
 const token1 = 'o';
 const slackclient = new WebClient(token1);
-const proxy_errorlId = 'C09B72958BS';u
+const proxy_errorlId = 'C09B72958BS';
 const jobsId = "C09AFMB5MV1"
 
 
@@ -446,64 +446,64 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
-      const result = await slackclient.chat.postMessage({
-        channel: jobsId,
-        blocks: [
-          // Header with job title
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: jobCards[i].title,
-              emoji: true
-            }
-          },
-          // Section with company info, logo, location, designation
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Company:* <${jobCards[i].companyLink}|${jobCards[i].company}>\n*Location:* ${jobCards[i].location}\n*Designation:* ${jobCards[i].designation}`
-            },
-            accessory: {
-              type: "image",
-              image_url: jobCards[i].companylog,
-              alt_text: "company logo"
-            }
-          },
-          // Context with post info, followers, employees
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: `Posted: ${jobCards[i].postTime} | Followers: ${jobCards[i].followersCount.toLocaleString()} | Employees: ${jobCards[i].e_count}`
-              }
-            ]
-          },
-          // Divider
-          {
-            type: "divider"
-          },
-          // Button to view job
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "View Job Posting",
-                  emoji: true
-                },
-                url: jobCards[i].joblink,
-                style: "primary"
-              }
-            ]
-          }
-        ]
-      })
-      console.log('slack api',result);
+      // const result = await slackclient.chat.postMessage({
+      //   channel: jobsId,
+      //   blocks: [
+      //     // Header with job title
+      //     {
+      //       type: "header",
+      //       text: {
+      //         type: "plain_text",
+      //         text: jobCards[i].title,
+      //         emoji: true
+      //       }
+      //     },
+      //     // Section with company info, logo, location, designation
+      //     {
+      //       type: "section",
+      //       text: {
+      //         type: "mrkdwn",
+      //         text: `*Company:* <${jobCards[i].companyLink}|${jobCards[i].company}>\n*Location:* ${jobCards[i].location}\n*Designation:* ${jobCards[i].designation}`
+      //       },
+      //       accessory: {
+      //         type: "image",
+      //         image_url: jobCards[i].companylog,
+      //         alt_text: "company logo"
+      //       }
+      //     },
+      //     // Context with post info, followers, employees
+      //     {
+      //       type: "context",
+      //       elements: [
+      //         {
+      //           type: "mrkdwn",
+      //           text: `Posted: ${jobCards[i].postTime} | Followers: ${jobCards[i].followersCount.toLocaleString()} | Employees: ${jobCards[i].e_count}`
+      //         }
+      //       ]
+      //     },
+      //     // Divider
+      //     {
+      //       type: "divider"
+      //     },
+      //     // Button to view job
+      //     {
+      //       type: "actions",
+      //       elements: [
+      //         {
+      //           type: "button",
+      //           text: {
+      //             type: "plain_text",
+      //             text: "View Job Posting",
+      //             emoji: true
+      //           },
+      //           url: jobCards[i].joblink,
+      //           style: "primary"
+      //         }
+      //       ]
+      //     }
+      //   ]
+      // })
+      // console.log('slack api',result);
     }
     reults.push(jobCards[i])
 
