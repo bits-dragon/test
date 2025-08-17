@@ -618,10 +618,10 @@ app.get('/test_slack', async (req, res) => {
       text: '',
     });
     console.log("Message sent:", result);
-    res.json({ result, token1 })
+    res.json({ result })
   } catch (err) {
     console.error("Slack API error:", err);
-    res.json({ token1 })
+    res.json({ err })
   }
 })
 
