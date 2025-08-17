@@ -599,7 +599,7 @@ app.get('/once_run', async (req, res) => {
   let jobs1 = [];
   jobs1 = await fetchAndParseJobs();
   const end = Date.now();
-  res.json({
+  res.jsoun({
     count: jobs1.length || 0,
     time: (end - start) / 1000,
     body: jobs1
