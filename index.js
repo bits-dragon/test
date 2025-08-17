@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { WebClient } from '@slack/web-api';
+import { DateTime } from 'luxon';
 
 
 const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
@@ -503,7 +504,7 @@ async function fetchJob_job(jobCards) {
           }
         ]
       })
-      console.log('slack api',result);
+      console.log('slack api', result);
     }
     reults.push(jobCards[i])
 
@@ -601,6 +602,21 @@ app.get('/once_run', async (req, res) => {
     time: (end - start) / 1000,
     body: jobs1
   });
+})
+app.get('/test_slack', async (req, res) => {
+  try {
+    const result = await slackclient.chat.postMessage({
+      channel: jobsId,
+      text: new DateTime().getTime().toString(0),
+    });
+    console.log("Message sent:", result.ts);
+    res.json({result})
+  } catch (err) {
+
+    console.error("Slack API error:", err);
+    res.json({err})
+
+  }
 })
 
 app.listen(PORT, () => {
