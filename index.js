@@ -609,12 +609,12 @@ app.get('/once_run', async (req, res) => {
     body: jobs1
   });
 })
-const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
-const slackclient = new WebClient(botItem.token);
+const botItem1 = tokens.find(bot => bot.botname == 'MyjobBot');
+const slackclient1 = new WebClient(botItem.token);
 app.get('/test_slack', async (req, res) => {
-  const result = await slackclient.chat.postMessage({
-    channel: botItem.channelId,
-    text: '',
+  const result = await slackclient1.chat.postMessage({
+    channel: botItem1.channelId,
+    text: '123',
   });
   res.json({ result })
   try {
