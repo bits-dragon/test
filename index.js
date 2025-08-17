@@ -614,7 +614,7 @@ app.get('/test_slack', async (req, res) => {
     const botItem = tokens.find(bot => bot.botname === 'MyjobBot');
     const slackclient = new WebClient(botItem.token);
     const result = await slackclient.chat.postMessage({
-      channel: jobsId,
+      channel: botItem.channelId,
       text: '',
     });
     console.log("Message sent:", result);
