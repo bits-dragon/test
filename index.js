@@ -11,7 +11,7 @@ import { WebClient } from '@slack/web-api';
 import { DateTime } from 'luxon';
 
 
-const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
+const token = '';
 const token1 = process.env.SLACK_BOT_TOKEN; // load from env
 
 const slackclient = new WebClient(token1);
