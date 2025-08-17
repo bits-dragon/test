@@ -454,7 +454,7 @@ async function fetchJob_job(jobCards) {
             type: "header",
             text: {
               type: "plain_text",
-              text: job.title,
+              text: jobCards[i].title,
               emoji: true
             }
           },
@@ -463,11 +463,11 @@ async function fetchJob_job(jobCards) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Company:* <${job.companyLink}|${job.company}>\n*Location:* ${job.location}\n*Designation:* ${job.designation}`
+              text: `*Company:* <${jobCards[i].companyLink}|${jobCards[i].company}>\n*Location:* ${jobCards[i].location}\n*Designation:* ${jobCards[i].designation}`
             },
             accessory: {
               type: "image",
-              image_url: job.companylog,
+              image_url: jobCards[i].companylog,
               alt_text: "company logo"
             }
           },
@@ -477,7 +477,7 @@ async function fetchJob_job(jobCards) {
             elements: [
               {
                 type: "mrkdwn",
-                text: `Posted: ${job.postTime} | Followers: ${job.followersCount.toLocaleString()} | Employees: ${job.e_count}`
+                text: `Posted: ${jobCards[i].postTime} | Followers: ${jobCards[i].followersCount.toLocaleString()} | Employees: ${jobCards[i].e_count}`
               }
             ]
           },
@@ -496,7 +496,7 @@ async function fetchJob_job(jobCards) {
                   text: "View Job Posting",
                   emoji: true
                 },
-                url: job.joblink,
+                url: jobCards[i].joblink,
                 style: "primary"
               }
             ]
