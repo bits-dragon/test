@@ -12,7 +12,7 @@ import { DateTime } from 'luxon';
 
 
 const token = 'xoxb-8840923140053-9354338297218-YxcOfPJCNfOMaM4e3tobE3k6';
-const token1 = 'xoxb-8840923140053-9365248833524-IqL2NpxtWD1rnct4JTh8HIZY';
+const token1 = 'xoxb-8840923140053-9365248833524-ScSfx4luYgksVRvBze6YD4eh';
 const slackclient = new WebClient(token1);
 const proxy_errorlId = 'C09B72958BS';
 const jobsId = "C09AFMB5MV1"
@@ -607,7 +607,7 @@ app.get('/test_slack', async (req, res) => {
   try {
     const result = await slackclient.chat.postMessage({
       channel: jobsId,
-      text: 'test',
+      text: '',
     });
     console.log("Message sent:", result);
     res.json({result})
