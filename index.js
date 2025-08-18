@@ -605,8 +605,8 @@ app.get('/once_run', async (req, res) => {
   const end = Date.now();
   res.jsoun({
     count: jobs1.length || 0,
-    time: (end - start) / 1000,
-    body: jobs1
+    time: end.toString(),
+    // body: jobs1
   });
 })
 const slackclient1 = new WebClient(botItem.token);
