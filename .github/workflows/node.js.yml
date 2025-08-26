@@ -2,7 +2,7 @@ name: Run index.js every 3 minutes
 
 on:
   schedule:
-    - cron: "*/3 * * * *" # every 3 minutes
+    - cron: "*/1 * * * *" # every 3 minutes
 jobs:
   run-node:
     runs-on: windows-latest
