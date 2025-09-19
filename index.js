@@ -451,68 +451,8 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
-      // const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
-      // const slackclient = new WebClient(botItem.token);
-      // const result = await slackclient.chat.postMessage({
-      //   channel: botItem.channelId,
-      //   blocks: [
-      //     // Header with job title
-      //     {
-      //       type: "header",
-      //       text: {
-      //         type: "plain_text",
-      //         text: jobCards[i].title,
-      //         emoji: true
-      //       }
-      //     },
-      //     // Section with company info, logo, location, designation
-      //     {
-      //       type: "section",
-      //       text: {
-      //         type: "mrkdwn",
-      //         text: `*Company:* <${jobCards[i].companyLink}|${jobCards[i].company}>\n*Location:* ${jobCards[i].location}\n*Designation:* ${jobCards[i].designation}`
-      //       },
-      //       accessory: {
-      //         type: "image",
-      //         image_url: jobCards[i].companylog,
-      //         alt_text: "company logo"
-      //       }
-      //     },
-      //     // Context with post info, followers, employees
-      //     {
-      //       type: "context",
-      //       elements: [
-      //         {
-      //           type: "mrkdwn",
-      //           text: `Posted: ${jobCards[i].postTime} | Followers: ${jobCards[i].followersCount.toLocaleString()} | Employees: ${jobCards[i].e_count}`
-      //         }
-      //       ]
-      //     },
-      //     // Divider
-      //     {
-      //       type: "divider"
-      //     },
-      //     // Button to view job
-      //     {
-      //       type: "actions",
-      //       elements: [
-      //         {
-      //           type: "button",
-      //           text: {
-      //             type: "plain_text",
-      //             text: "View Job Posting",
-      //             emoji: true
-      //           },
-      //           url: jobCards[i].joblink,
-      //           style: "primary"
-      //         }
-      //       ]
-      //     }
-      //   ]
-      // })
-      // console.log('slack api', result);
-      reults.push(jobCards[i])
     }
+    reults.push(jobCards[i])
 
   }
   return reults;
@@ -550,19 +490,6 @@ async function oneScrap() {
   fs.writeFileSync('1.json', JSON.stringify(jobs1, null, 2), 'utf-8');
   return jobs1;
 }
-// oneScrap()
-app.get('/update', async (req, res) => {
-  await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
-  const start = Date.now();
-  let jobs1 = [];
-  jobs1 = await fetchAndParseJobs(req.query.q);
-  const end = Date.now();
-  res.json({
-    count: jobs1.length || 0,
-    time: (end - start) / 1000,
-    body: jobs1
-  });
-})
 
 app.get('/location', async (req, res) => {
   let result = await fetch('https://ipinfo.io/json')
@@ -571,13 +498,6 @@ app.get('/location', async (req, res) => {
   res.json(
     result
   );//
-})
-
-
-
-
-app.get('/status', async (req, res) => {
-  res.json({ status })
 })
 
 
@@ -609,37 +529,23 @@ app.get('/once_run', async (req, res) => {
     // body: jobs1
   });
 })
-// const slackclient1 = new WebClient(botItem.token);
-app.get('/test_slack', async (req, res) => {
-  const botItem1 = tokens.find(bot => bot.botname == 'MyjobBot');
-  // const result = await slackclient1.chat.postMessage({
-  //   channel: botItem1.channelId,
-  //   text: '123',
-  // });
-  res.json({ botItem1 })
-  try {
-    const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
-    const slackclient = new WebClient(botItem.token);
-    const result = await slackclient.chat.postMessage({
-      channel: botItem.channelId,
-      text: '',
-    });
-    console.log("Message sent:", result);
-    res.json({ result })
-  } catch (err) {
-    console.error("Slack API error:", err);
-    res.json({ err, botItem })
-  }
-})
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+// oneScrap()
+app.get('/update', async (req, res) => {
+  await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
+  const start = Date.now();
+  let jobs1 = [];
+  jobs1 = await fetchAndParseJobs(req.query.q);
+  const end = Date.now();
+  res.json({
+    count: jobs1.length || 0,
+    time: (end - start) / 1000,
+    body: jobs1
+  });
+})
 
-// setInterval(async () => {
-//   console.log("Run")
-//   await axios.get('http://test-omega-blond-96.vercel.app/once_run')
-// }, 1000 * 10 * 1);//
 
 // await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
 // const start = Date.now();
