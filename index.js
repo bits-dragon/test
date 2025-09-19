@@ -552,6 +552,75 @@ app.get('/update', async (req, res) => {
   });
 })
 
+app.get("/view", async (req, res) => {
+  const html = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Job Listings</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; background: #f3f2ef; }
+      .job-card {
+        display: flex; align-items: center;
+        background: white; padding: 15px; margin-bottom: 15px;
+        border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .job-card img {
+        width: 60px; height: 60px; border-radius: 6px; margin-right: 15px;
+      }
+      .job-info { flex: 1; }
+      .job-info h2 { margin: 0; font-size: 18px; }
+      .job-info h2 a { text-decoration: none; color: #0a66c2; }
+      .job-info p { margin: 4px 0; color: #555; }
+      .meta { font-size: 12px; color: #777; }
+    </style>
+  </head>
+  <body>
+    <h1>Job Opportunities</h1>
+    <div id="job-container"></div>
+
+    <script>
+      async function loadJobs() {
+        try {
+          const res = await fetch("/giveme");
+          const data = await res.json();
+          const jobs = data.jobs || [];
+
+          const container = document.getElementById("job-container");
+          container.innerHTML = "";
+
+          jobs.forEach(job => {
+            const card = document.createElement("div");
+            card.className = "job-card";
+            card.innerHTML = \`
+              <img src="\${job.companylog || 'https://via.placeholder.com/60'}" alt="\${job.company} logo"/>
+              <div class="job-info">
+                <h2><a href="\${job.joblink}" target="_blank">\${job.title}</a></h2>
+                <p><strong>\${job.company || ''}</strong> • \${job.designation || ''}</p>
+                <p>\${job.location || ''}</p>
+                <p class="meta">
+                  \${job.followersCount ? job.followersCount + " followers" : ""} 
+                  • Posted \${job.postTime || ""}
+                </p>
+              </div>
+            \`;
+            container.appendChild(card);
+          });
+        } catch (err) {
+          console.error("Error loading jobs:", err);
+        }
+      }
+
+      loadJobs();
+    </script>
+  </body>
+  </html>
+  `;
+  res.send(html);
+});
+
+
 
 // await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
 // const start = Date.now();
