@@ -316,7 +316,7 @@ function parsePostTimeToMinutes(postTime) {
   return Infinity;
 }
 
-async function fetchJob_list(index) {
+async function fetchJob_list(index, query) {
   let headers = {
     "User-Agent": userAgents[Math.floor(Math.random() * userAgents.length)],
     Accept: "application/json, text/javascript, */*; q=0.01",
@@ -340,7 +340,9 @@ async function fetchJob_list(index) {
     // optionally add cookies if you have authenticated session cookies
   };
   // const apiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=developer%20or%20engineer&geoId=103644278&f_TPR=r600&f_WT=2&start=${index}`;
-  const apiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=developer%20or%20engineer&f_TPR=r600&f_WT=2&geoId=103644278&origin=JOB_SEARCH_PAGE_JOB_FILTER&refresh=true&sortBy=DD&start=${index}`
+  // const apiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=developer%20or%20engineer&f_TPR=r600&f_WT=2&geoId=103644278&origin=JOB_SEARCH_PAGE_JOB_FILTER&refresh=true&sortBy=DD&start=${index}`
+  const apiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=` + query + `&f_TPR=r600&f_WT=2&geoId=103644278&origin=JOB_SEARCH_PAGE_JOB_FILTER&refresh=true&sortBy=DD&start=${index}`
+
   // &f_JIYN=true
   //keywords=Full%20Stack%20OR%20frontend%20OR%20backend%20OR%20javascript%20OR%20python
   try {
@@ -458,13 +460,13 @@ async function fetchJob_job(jobCards) {
   return reults;
 }
 
-async function fetchAndParseJobs() {
+async function fetchAndParseJobs(query) {
   try {
     let jobCards = []
 
     let i = 0;
     while (1) {
-      let resu = await fetchJob_list(i);
+      let resu = await fetchJob_list(i, query);
       if (resu.state == 1) {
         i = i + resu.len
         jobCards.push(...resu.datas);
@@ -537,7 +539,8 @@ app.get('/update', async (req, res) => {
   await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
   const start = Date.now();
   let jobs1 = [];
-  jobs1 = await fetchAndParseJobs(req.query.q);
+  let query = req.query.q || ""
+  jobs1 = await fetchAndParseJobs(query);
   const end = Date.now();
   res.json({
     count: jobs1.length || 0,
