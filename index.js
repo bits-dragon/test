@@ -451,8 +451,8 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
+      reults.push(jobCards[i])
     }
-    reults.push(jobCards[i])
 
   }
   return reults;
