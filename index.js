@@ -451,68 +451,68 @@ async function fetchJob_job(jobCards) {
     if (!jobfind) {
       const newjob = new Job(jobCards[i]);
       if (await newjob.save()) console.log("saved", i)
-      const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
-      const slackclient = new WebClient(botItem.token);
-      const result = await slackclient.chat.postMessage({
-        channel: botItem.channelId,
-        blocks: [
-          // Header with job title
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: jobCards[i].title,
-              emoji: true
-            }
-          },
-          // Section with company info, logo, location, designation
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Company:* <${jobCards[i].companyLink}|${jobCards[i].company}>\n*Location:* ${jobCards[i].location}\n*Designation:* ${jobCards[i].designation}`
-            },
-            accessory: {
-              type: "image",
-              image_url: jobCards[i].companylog,
-              alt_text: "company logo"
-            }
-          },
-          // Context with post info, followers, employees
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: `Posted: ${jobCards[i].postTime} | Followers: ${jobCards[i].followersCount.toLocaleString()} | Employees: ${jobCards[i].e_count}`
-              }
-            ]
-          },
-          // Divider
-          {
-            type: "divider"
-          },
-          // Button to view job
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "View Job Posting",
-                  emoji: true
-                },
-                url: jobCards[i].joblink,
-                style: "primary"
-              }
-            ]
-          }
-        ]
-      })
-      console.log('slack api', result);
+      // const botItem = tokens.find(bot => bot.botname == 'MyjobBot');
+      // const slackclient = new WebClient(botItem.token);
+      // const result = await slackclient.chat.postMessage({
+      //   channel: botItem.channelId,
+      //   blocks: [
+      //     // Header with job title
+      //     {
+      //       type: "header",
+      //       text: {
+      //         type: "plain_text",
+      //         text: jobCards[i].title,
+      //         emoji: true
+      //       }
+      //     },
+      //     // Section with company info, logo, location, designation
+      //     {
+      //       type: "section",
+      //       text: {
+      //         type: "mrkdwn",
+      //         text: `*Company:* <${jobCards[i].companyLink}|${jobCards[i].company}>\n*Location:* ${jobCards[i].location}\n*Designation:* ${jobCards[i].designation}`
+      //       },
+      //       accessory: {
+      //         type: "image",
+      //         image_url: jobCards[i].companylog,
+      //         alt_text: "company logo"
+      //       }
+      //     },
+      //     // Context with post info, followers, employees
+      //     {
+      //       type: "context",
+      //       elements: [
+      //         {
+      //           type: "mrkdwn",
+      //           text: `Posted: ${jobCards[i].postTime} | Followers: ${jobCards[i].followersCount.toLocaleString()} | Employees: ${jobCards[i].e_count}`
+      //         }
+      //       ]
+      //     },
+      //     // Divider
+      //     {
+      //       type: "divider"
+      //     },
+      //     // Button to view job
+      //     {
+      //       type: "actions",
+      //       elements: [
+      //         {
+      //           type: "button",
+      //           text: {
+      //             type: "plain_text",
+      //             text: "View Job Posting",
+      //             emoji: true
+      //           },
+      //           url: jobCards[i].joblink,
+      //           style: "primary"
+      //         }
+      //       ]
+      //     }
+      //   ]
+      // })
+      // console.log('slack api', result);
+      reults.push(jobCards[i])
     }
-    reults.push(jobCards[i])
 
   }
   return reults;
@@ -551,9 +551,10 @@ async function oneScrap() {
   return jobs1;
 }
 // oneScrap()
-app.get('/one', async (req, res) => {
+app.get('/update', async (req, res) => {
+  await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
   const start = Date.now();
-  let jobs1 = 0;
+  let jobs1 = [];
   jobs1 = await fetchAndParseJobs(req.query.q);
   const end = Date.now();
   res.json({
@@ -562,7 +563,6 @@ app.get('/one', async (req, res) => {
     body: jobs1
   });
 })
-// fetchAndParseJobs(20);
 
 app.get('/location', async (req, res) => {
   let result = await fetch('https://ipinfo.io/json')
