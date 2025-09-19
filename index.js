@@ -596,12 +596,20 @@ app.get("/view", async (req, res) => {
             card.innerHTML = \`
               <img src="\${job.companylog || 'https://via.placeholder.com/60'}" alt="\${job.company} logo"/>
               <div class="job-info">
-                <h2><a href="\${job.joblink}" target="_blank">\${job.title}</a></h2>
-                <p><strong>\${job.company || ''}</strong> • \${job.designation || ''}</p>
+                <h2>
+                  <a href="\${job.joblink}" target="_blank">\${job.title}</a>
+                </h2>
+                <p>
+                  <strong>
+                    <a href="\${job.companyLink}" target="_blank">\${job.company || ''}</a>
+                  </strong>
+                  • \${job.designation || ''}
+                </p>
                 <p>\${job.location || ''}</p>
                 <p class="meta">
-                  \${job.followersCount ? job.followersCount + " followers" : ""} 
-                  • Posted \${job.postTime || ""}
+                  \${job.e_count ? job.e_count + " employees" : ""} 
+                  • \${job.followersCount ? job.followersCount + " followers" : ""}
+                  • Posted: \${job.postedtime ? new Date(job.postedtime).toLocaleString() : ""}
                 </p>
               </div>
             \`;
