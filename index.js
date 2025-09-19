@@ -609,7 +609,7 @@ app.get('/once_run', async (req, res) => {
     // body: jobs1
   });
 })
-const slackclient1 = new WebClient(botItem.token);
+// const slackclient1 = new WebClient(botItem.token);
 app.get('/test_slack', async (req, res) => {
   const botItem1 = tokens.find(bot => bot.botname == 'MyjobBot');
   // const result = await slackclient1.chat.postMessage({
