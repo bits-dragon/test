@@ -552,7 +552,7 @@ app.get('/update', async (req, res) => {
   });
 })
 
-app.get("/view", async (req, res) => {
+app.get("/view", (req, res) => {
   const html = `
   <!DOCTYPE html>
   <html lang="en">
@@ -581,10 +581,25 @@ app.get("/view", async (req, res) => {
     <div id="job-container"></div>
 
     <script>
-      function convertToJapanTime(dateStr) {
+      function convertESTtoJST(dateStr) {
         if (!dateStr) return "";
-        const d = new Date(dateStr);
-        return d.toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+
+        // Parse postedtime as New York time
+        const estDate = new Date(
+          new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/New_York",
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            hour12: false
+          }).format(new Date(dateStr))
+        );
+
+        // Convert that EST date into JST
+        return new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Tokyo",
+          year: "numeric", month: "2-digit", day: "2-digit",
+          hour: "2-digit", minute: "2-digit"
+        }).format(estDate);
       }
 
       async function loadJobs() {
@@ -615,7 +630,7 @@ app.get("/view", async (req, res) => {
                 <p class="meta">
                   \${job.e_count ? job.e_count + " employees" : ""} 
                   • \${job.followersCount ? job.followersCount + " followers" : ""}
-                  • Posted: \${convertToJapanTime(job.postedtime)}
+                  • Posted: \${convertESTtoJST(job.postedtime)}
                 </p>
               </div>
             \`;
