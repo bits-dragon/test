@@ -142,9 +142,9 @@ const userAgents = [
   "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1"
 ];
 
-const comap = await Blockcompanies.find();
-let cutcompanies = comap.map(c => c.blockcompany);
-let tokens = await Tokenlist.find();
+
+let cutcompanies = []
+// let tokens = await Tokenlist.find();
 
 
 async function scrapeLinkedinProfiles(url) {
@@ -536,6 +536,8 @@ app.listen(PORT, () => {
 });
 // oneScrap()
 app.get('/update', async (req, res) => {
+  const comap = await Blockcompanies.find();
+  cutcompanies = comap.map(c => c.blockcompany);
   await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
   const start = Date.now();
   let jobs1 = [];
