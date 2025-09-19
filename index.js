@@ -574,17 +574,40 @@ app.get("/view", (req, res) => {
       .job-info h2 a { text-decoration: none; color: #0a66c2; }
       .job-info p { margin: 4px 0; color: #555; }
       .meta { font-size: 12px; color: #777; }
+
+      /* Pagination */
+      .pagination {
+        display: flex; justify-content: center; align-items: center;
+        margin-top: 20px; gap: 5px;
+      }
+      .pagination button {
+        padding: 8px 14px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+      }
+      .pagination button:hover {
+        background: #0a66c2; color: white; border-color: #0a66c2;
+      }
+      .pagination button.active {
+        background: #0a66c2; color: white; border-color: #0a66c2;
+      }
+      .pagination button:disabled {
+        opacity: 0.5; cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
     <h1>Job Opportunities</h1>
     <div id="job-container"></div>
+    <div class="pagination" id="pagination"></div>
 
     <script>
       function convertESTtoJST(dateStr) {
         if (!dateStr) return "";
-
-        // Parse postedtime as New York time
         const estDate = new Date(
           new Intl.DateTimeFormat("en-US", {
             timeZone: "America/New_York",
@@ -593,8 +616,6 @@ app.get("/view", (req, res) => {
             hour12: false
           }).format(new Date(dateStr))
         );
-
-        // Convert that EST date into JST
         return new Intl.DateTimeFormat("en-US", {
           timeZone: "Asia/Tokyo",
           year: "numeric", month: "2-digit", day: "2-digit",
@@ -602,40 +623,113 @@ app.get("/view", (req, res) => {
         }).format(estDate);
       }
 
+      let jobs = [];
+      let currentPage = 1;
+      const perPage = 10;
+
+      function renderJobs() {
+        const container = document.getElementById("job-container");
+        container.innerHTML = "";
+
+        const start = (currentPage - 1) * perPage;
+        const end = start + perPage;
+        const pageJobs = jobs.slice(start, end);
+
+        pageJobs.forEach(job => {
+          const card = document.createElement("div");
+          card.className = "job-card";
+          card.innerHTML = \`
+            <img src="\${job.companylog || 'https://via.placeholder.com/60'}" alt="\${job.company} logo"/>
+            <div class="job-info">
+              <h2>
+                <a href="\${job.joblink}" target="_blank">\${job.title}</a>
+              </h2>
+              <p>
+                <strong>
+                  <a href="\${job.companyLink}" target="_blank">\${job.company || ''}</a>
+                </strong>
+                • \${job.designation || ''}
+              </p>
+              <p>\${job.location || ''}</p>
+              <p class="meta">
+                \${job.e_count ? job.e_count + " employees" : ""} 
+                • \${job.followersCount ? job.followersCount + " followers" : ""}
+                • Posted: \${convertESTtoJST(job.postedtime)}
+              </p>
+            </div>
+          \`;
+          container.appendChild(card);
+        });
+
+        renderPagination();
+      }
+
+      function renderPagination() {
+        const pagination = document.getElementById("pagination");
+        pagination.innerHTML = "";
+
+        const totalPages = Math.ceil(jobs.length / perPage);
+
+        // Prev button
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "« Prev";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { currentPage--; renderJobs(); };
+        pagination.appendChild(prevBtn);
+
+        // Page numbers (show max 5 pages around current)
+        let start = Math.max(1, currentPage - 2);
+        let end = Math.min(totalPages, currentPage + 2);
+
+        if (start > 1) {
+          const first = document.createElement("button");
+          first.textContent = "1";
+          first.onclick = () => { currentPage = 1; renderJobs(); };
+          pagination.appendChild(first);
+
+          if (start > 2) {
+            const dots = document.createElement("span");
+            dots.textContent = "...";
+            pagination.appendChild(dots);
+          }
+        }
+
+        for (let i = start; i <= end; i++) {
+          const btn = document.createElement("button");
+          btn.textContent = i;
+          if (i === currentPage) btn.classList.add("active");
+          btn.onclick = () => { currentPage = i; renderJobs(); };
+          pagination.appendChild(btn);
+        }
+
+        if (end < totalPages) {
+          if (end < totalPages - 1) {
+            const dots = document.createElement("span");
+            dots.textContent = "...";
+            pagination.appendChild(dots);
+          }
+
+          const last = document.createElement("button");
+          last.textContent = totalPages;
+          last.onclick = () => { currentPage = totalPages; renderJobs(); };
+          pagination.appendChild(last);
+        }
+
+        // Next button
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "Next »";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => { currentPage++; renderJobs(); };
+        pagination.appendChild(nextBtn);
+      }
+
       async function loadJobs() {
         try {
           const res = await fetch("/giveme");
           const data = await res.json();
-          const jobs = data.jobs || [];
-
-          const container = document.getElementById("job-container");
-          container.innerHTML = "";
-
-          jobs.forEach(job => {
-            const card = document.createElement("div");
-            card.className = "job-card";
-            card.innerHTML = \`
-              <img src="\${job.companylog || 'https://via.placeholder.com/60'}" alt="\${job.company} logo"/>
-              <div class="job-info">
-                <h2>
-                  <a href="\${job.joblink}" target="_blank">\${job.title}</a>
-                </h2>
-                <p>
-                  <strong>
-                    <a href="\${job.companyLink}" target="_blank">\${job.company || ''}</a>
-                  </strong>
-                  • \${job.designation || ''}
-                </p>
-                <p>\${job.location || ''}</p>
-                <p class="meta">
-                  \${job.e_count ? job.e_count + " employees" : ""} 
-                  • \${job.followersCount ? job.followersCount + " followers" : ""}
-                  • Posted: \${convertESTtoJST(job.postedtime)}
-                </p>
-              </div>
-            \`;
-            container.appendChild(card);
-          });
+          jobs = data.jobs || [];
+          currentPage = 1;
+          renderJobs();
         } catch (err) {
           console.error("Error loading jobs:", err);
         }
@@ -648,6 +742,7 @@ app.get("/view", (req, res) => {
   `;
   res.send(html);
 });
+
 
 
 // await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
