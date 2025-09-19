@@ -581,6 +581,12 @@ app.get("/view", async (req, res) => {
     <div id="job-container"></div>
 
     <script>
+      function convertToJapanTime(dateStr) {
+        if (!dateStr) return "";
+        const d = new Date(dateStr);
+        return d.toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+      }
+
       async function loadJobs() {
         try {
           const res = await fetch("/giveme");
@@ -609,7 +615,7 @@ app.get("/view", async (req, res) => {
                 <p class="meta">
                   \${job.e_count ? job.e_count + " employees" : ""} 
                   • \${job.followersCount ? job.followersCount + " followers" : ""}
-                  • Posted: \${job.postedtime ? new Date(job.postedtime).toLocaleString() : ""}
+                  • Posted: \${convertToJapanTime(job.postedtime)}
                 </p>
               </div>
             \`;
@@ -627,7 +633,6 @@ app.get("/view", async (req, res) => {
   `;
   res.send(html);
 });
-
 
 
 // await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
