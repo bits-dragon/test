@@ -579,11 +579,12 @@ app.get('/view', async (req, res) => {
       return est.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
-    function formatJST(dateStr) {
+    function formatPST(dateStr) {
       if (!dateStr) return "N/A";
       const est = DateTime.fromISO(dateStr);
-      const jst = est.setZone("Asia/Tokyo");
-      return jst.toFormat("yyyy/MM/dd HH:mm:ss");
+      const pst = est.setZone("America/Los_Angeles"); // Convert to PST/PDT
+
+      return pst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     // ---- Job cards ----
