@@ -581,7 +581,7 @@ app.get('/view', async (req, res) => {
 
     function formatPST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr);
+      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
       const pst = est.setZone("America/Los_Angeles"); // Convert to PST/PDT
 
       return pst.toFormat("yyyy/MM/dd HH:mm:ss");
