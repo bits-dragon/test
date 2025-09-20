@@ -557,7 +557,6 @@ app.get('/update', async (req, res) => {
 import { DateTime } from "luxon";
 
 app.get('/view', async (req, res) => {
-
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 100;
@@ -573,17 +572,18 @@ app.get('/view', async (req, res) => {
     const totalJobs = await Job.countDocuments();
     const totalPages = Math.ceil(totalJobs / limit);
 
-    // ---- Format EST & JST ----
+    // ---- Format Time ----
     function formatEST(dateStr) {
       if (!dateStr) return "N/A";
-      const dt = DateTime.fromISO(dateStr, { zone: "utc" });
-      return dt.toFormat("yyyy/MM/dd HH:mm:ss");
+      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      return est.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
-    function formatPST(dateStr) {
+    function formatJST(dateStr) {
       if (!dateStr) return "N/A";
-      const nyTime = DateTime.fromISO(dateStr, { zone: "America/New_York" });
-      return nyTime.toFormat("yyyy/MM/dd HH:mm:ss");
+      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      const jst = est.setZone("Asia/Tokyo");
+      return jst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     // ---- Job cards ----
@@ -606,31 +606,48 @@ app.get('/view', async (req, res) => {
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
           <p>Posted (EST): ${formatEST(job.postedtime)}</p>
+          <p>Posted (JST): ${formatJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
 
-    // ---- Pagination ----
+    // ---- Pagination (LinkedIn style with ellipsis) ----
     let pagination = `<div class="pagination">`;
 
-    const pageRange = 3;
-    const startPage = Math.max(1, page - pageRange);
-    const endPage = Math.min(totalPages, page + pageRange);
-
     if (page > 1) {
-      pagination += `<a href="/view?page=${page - 1}" class="btn prev">« Prev</a>`;
+      pagination += `<a href="/view?page=${page - 1}" class="page-btn">« Prev</a>`;
     }
 
-    for (let i = startPage; i <= endPage; i++) {
-      if (i === page) {
-        pagination += `<span class="current">${i}</span>`;
-      } else {
-        pagination += `<a href="/view?page=${i}" class="btn">${i}</a>`;
+    // Always show first page
+    if (page > 3) {
+      pagination += `<a href="/view?page=1" class="page-btn">1</a>`;
+      if (page > 4) {
+        pagination += `<span class="ellipsis">...</span>`;
       }
     }
 
+    // Show nearby pages (current ± 2)
+    const startPage = Math.max(1, page - 2);
+    const endPage = Math.min(totalPages, page + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === page) {
+        pagination += `<span class="page-btn active">${i}</span>`;
+      } else {
+        pagination += `<a href="/view?page=${i}" class="page-btn">${i}</a>`;
+      }
+    }
+
+    // Always show last page
+    if (page < totalPages - 2) {
+      if (page < totalPages - 3) {
+        pagination += `<span class="ellipsis">...</span>`;
+      }
+      pagination += `<a href="/view?page=${totalPages}" class="page-btn">${totalPages}</a>`;
+    }
+
     if (page < totalPages) {
-      pagination += `<a href="/view?page=${page + 1}" class="btn next">Next »</a>`;
+      pagination += `<a href="/view?page=${page + 1}" class="page-btn">Next »</a>`;
     }
 
     pagination += `</div>`;
@@ -656,26 +673,35 @@ app.get('/view', async (req, res) => {
           .industry { color: #777; font-size: 14px; }
           .location { color: #333; font-size: 14px; margin-top: 4px; }
           .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; gap: 20px; flex-wrap: wrap; }
-          
+
           /* Pagination styles */
-          .pagination { margin-top: 20px; text-align: center; }
-          .pagination .btn, .pagination .current {
+          .pagination { margin: 30px 0; text-align: center; }
+          .page-btn {
             display: inline-block;
             padding: 8px 14px;
-            margin: 0 3px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            margin: 0 4px;
+            border-radius: 20px;
+            border: 1px solid #0073b1;
             text-decoration: none;
             color: #0073b1;
+            font-size: 14px;
+            transition: all 0.2s ease;
           }
-          .pagination .btn:hover {
+          .page-btn:hover {
             background: #0073b1;
             color: white;
           }
-          .pagination .current {
+          .page-btn.active {
             background: #0073b1;
             color: white;
             font-weight: bold;
+            cursor: default;
+          }
+          .ellipsis {
+            display: inline-block;
+            margin: 0 6px;
+            color: #999;
+            font-size: 14px;
           }
         </style>
       </head>
@@ -696,4 +722,5 @@ app.get('/view', async (req, res) => {
     res.status(500).send("<h1>Internal Server Error</h1>");
   }
 });
+
 
