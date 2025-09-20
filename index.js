@@ -613,7 +613,6 @@ app.get('/view', async (req, res) => {
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
           <p>Posted (EST): ${formatEST(job.postedtime)}</p>
-          <p>Posted (JST): ${formatJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
