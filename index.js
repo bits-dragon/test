@@ -552,207 +552,89 @@ app.get('/update', async (req, res) => {
   });
 })
 
-app.get("/view", (req, res) => {
-  const html = `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Job Listings</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 20px; background: #f3f2ef; }
-      .job-card {
-        display: flex; align-items: center;
-        background: white; padding: 15px; margin-bottom: 15px;
-        border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-      .job-card img {
-        width: 60px; height: 60px; border-radius: 6px; margin-right: 15px;
-      }
-      .job-info { flex: 1; }
-      .job-info h2 { margin: 0; font-size: 18px; }
-      .job-info h2 a { text-decoration: none; color: #0a66c2; }
-      .job-info p { margin: 4px 0; color: #555; }
-      .meta { font-size: 12px; color: #777; }
+app.get('/view', async (req, res) => {
+  try {
+    // Get page number from query (default 1 if not provided)
+    const page = parseInt(req.query.page) || 1;
+    const limit = 100;
+    const skip = (page - 1) * limit;
 
-      /* Pagination */
-      .pagination {
-        display: flex; justify-content: center; align-items: center;
-        margin-top: 20px; gap: 5px;
-      }
-      .pagination button {
-        padding: 8px 14px;
-        border: 1px solid #ddd;
-        background: white;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.2s ease;
-      }
-      .pagination button:hover {
-        background: #0a66c2; color: white; border-color: #0a66c2;
-      }
-      .pagination button.active {
-        background: #0a66c2; color: white; border-color: #0a66c2;
-      }
-      .pagination button:disabled {
-        opacity: 0.5; cursor: not-allowed;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Job Opportunities</h1>
-    <div id="job-container"></div>
-    <div class="pagination" id="pagination"></div>
+    // Fetch jobs from DB
+    const jobs = await Job.find()
+      .sort({ postedtime: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
 
-    <script>
-      function convertESTtoJST(dateStr) {
-        if (!dateStr) return "";
-        const estDate = new Date(
-          new Intl.DateTimeFormat("en-US", {
-            timeZone: "America/New_York",
-            year: "numeric", month: "2-digit", day: "2-digit",
-            hour: "2-digit", minute: "2-digit", second: "2-digit",
-            hour12: false
-          }).format(new Date(dateStr))
-        );
-        return new Intl.DateTimeFormat("en-US", {
-          timeZone: "Asia/Tokyo",
-          year: "numeric", month: "2-digit", day: "2-digit",
-          hour: "2-digit", minute: "2-digit"
-        }).format(estDate);
-      }
+    const totalJobs = await Job.countDocuments();
+    const totalPages = Math.ceil(totalJobs / limit);
 
-      let jobs = [];
-      let currentPage = 1;
-      const perPage = 10;
+    // Generate job cards
+    const jobCards = jobs.map(job => `
+      <div class="job-card">
+        <div class="job-header">
+          <img src="${job.companylog || 'https://via.placeholder.com/50'}" alt="Logo" class="company-logo"/>
+          <div>
+            <h3><a href="${job.joblink}" target="_blank">${job.title || 'Untitled'}</a></h3>
+            <p class="company">${job.company || 'Unknown Company'}</p>
+            <p class="location">${job.location || ''}</p>
+          </div>
+        </div>
+        <div class="job-footer">
+          <p>Posted: ${job.postedtime ? new Date(job.postedtime).toLocaleString() : 'N/A'}</p>
+          ${job.companyLink ? `<a href="${job.companyLink}" target="_blank">Company Profile</a>` : ''}
+        </div>
+      </div>
+    `).join("");
 
-      function renderJobs() {
-        const container = document.getElementById("job-container");
-        container.innerHTML = "";
+    // Pagination controls
+    let pagination = `<div class="pagination">`;
+    if (page > 1) {
+      pagination += `<a href="/view?page=${page - 1}" class="btn">Previous</a>`;
+    }
+    pagination += `<span> Page ${page} of ${totalPages} </span>`;
+    if (page < totalPages) {
+      pagination += `<a href="/view?page=${page + 1}" class="btn">Next</a>`;
+    }
+    pagination += `</div>`;
 
-        const start = (currentPage - 1) * perPage;
-        const end = start + perPage;
-        const pageJobs = jobs.slice(start, end);
+    // Full HTML response
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Jobs - Page ${page}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
+          .container { max-width: 900px; margin: 20px auto; padding: 10px; }
+          .job-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+          .job-header { display: flex; gap: 15px; align-items: center; }
+          .company-logo { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
+          h3 { margin: 0; font-size: 18px; }
+          h3 a { text-decoration: none; color: #0073b1; }
+          h3 a:hover { text-decoration: underline; }
+          .company { color: #555; margin: 3px 0; }
+          .location { color: #777; font-size: 14px; }
+          .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; justify-content: space-between; }
+          .pagination { margin-top: 20px; text-align: center; }
+          .pagination .btn { padding: 8px 15px; margin: 0 5px; border: 1px solid #0073b1; border-radius: 4px; text-decoration: none; color: #0073b1; }
+          .pagination .btn:hover { background: #0073b1; color: white; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Job Listings</h1>
+          ${jobCards || "<p>No jobs found.</p>"}
+          ${pagination}
+        </div>
+      </body>
+      </html>
+    `;
 
-        pageJobs.forEach(job => {
-          const card = document.createElement("div");
-          card.className = "job-card";
-          card.innerHTML = \`
-            <img src="\${job.companylog || 'https://via.placeholder.com/60'}" alt="\${job.company} logo"/>
-            <div class="job-info">
-              <h2>
-                <a href="\${job.joblink}" target="_blank">\${job.title}</a>
-              </h2>
-              <p>
-                <strong>
-                  <a href="\${job.companyLink}" target="_blank">\${job.company || ''}</a>
-                </strong>
-                • \${job.designation || ''}
-              </p>
-              <p>\${job.location || ''}</p>
-              <p class="meta">
-                \${job.e_count ? job.e_count + " employees" : ""} 
-                • \${job.followersCount ? job.followersCount + " followers" : ""}
-                • Posted: \${convertESTtoJST(job.postedtime)}
-              </p>
-            </div>
-          \`;
-          container.appendChild(card);
-        });
+    res.send(html);
 
-        renderPagination();
-      }
-
-      function renderPagination() {
-        const pagination = document.getElementById("pagination");
-        pagination.innerHTML = "";
-
-        const totalPages = Math.ceil(jobs.length / perPage);
-
-        // Prev button
-        const prevBtn = document.createElement("button");
-        prevBtn.textContent = "« Prev";
-        prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => { currentPage--; renderJobs(); };
-        pagination.appendChild(prevBtn);
-
-        // Page numbers (show max 5 pages around current)
-        let start = Math.max(1, currentPage - 2);
-        let end = Math.min(totalPages, currentPage + 2);
-
-        if (start > 1) {
-          const first = document.createElement("button");
-          first.textContent = "1";
-          first.onclick = () => { currentPage = 1; renderJobs(); };
-          pagination.appendChild(first);
-
-          if (start > 2) {
-            const dots = document.createElement("span");
-            dots.textContent = "...";
-            pagination.appendChild(dots);
-          }
-        }
-
-        for (let i = start; i <= end; i++) {
-          const btn = document.createElement("button");
-          btn.textContent = i;
-          if (i === currentPage) btn.classList.add("active");
-          btn.onclick = () => { currentPage = i; renderJobs(); };
-          pagination.appendChild(btn);
-        }
-
-        if (end < totalPages) {
-          if (end < totalPages - 1) {
-            const dots = document.createElement("span");
-            dots.textContent = "...";
-            pagination.appendChild(dots);
-          }
-
-          const last = document.createElement("button");
-          last.textContent = totalPages;
-          last.onclick = () => { currentPage = totalPages; renderJobs(); };
-          pagination.appendChild(last);
-        }
-
-        // Next button
-        const nextBtn = document.createElement("button");
-        nextBtn.textContent = "Next »";
-        nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => { currentPage++; renderJobs(); };
-        pagination.appendChild(nextBtn);
-      }
-
-      async function loadJobs() {
-        try {
-          const res = await fetch("/giveme");
-          const data = await res.json();
-          jobs = data.jobs || [];
-          currentPage = 1;
-          renderJobs();
-        } catch (err) {
-          console.error("Error loading jobs:", err);
-        }
-      }
-
-      loadJobs();
-    </script>
-  </body>
-  </html>
-  `;
-  res.send(html);
+  } catch (error) {
+    console.error("Error rendering jobs:", error);
+    res.status(500).send("<h1>Internal Server Error</h1>");
+  }
 });
-
-
-
-// await timeSch.findByIdAndUpdate("689f8428f36aeb80642bb953", { "time_text": new Date().toString() }, { new: true })
-// const start = Date.now();
-// let jobs1 = 0;
-// jobs1 = await fetchAndParseJobs();
-// const end = Date.now();8
-// console.log({
-//   count: jobs1.length || 0,
-//   time: (end - start) / 1000,
-//   start,end
-// })
-// await mongoose.disconnect();
