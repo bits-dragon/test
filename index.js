@@ -552,13 +552,28 @@ app.get('/update', async (req, res) => {
   });
 })
 
+function formatToJST(dateStr) {
+  if (!dateStr) return "N/A";
+  const date = new Date(dateStr);
+  if (isNaN(date)) return "Invalid Date";
+
+  return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+
 app.get('/view', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 100;
     const skip = (page - 1) * limit;
 
-    // Fetch jobs with pagination
     const jobs = await Job.find()
       .sort({ postedtime: -1 })
       .skip(skip)
@@ -568,17 +583,22 @@ app.get('/view', async (req, res) => {
     const totalJobs = await Job.countDocuments();
     const totalPages = Math.ceil(totalJobs / limit);
 
-    // Helper: convert EST → JST
-    function convertESTtoJST(dateStr) {
+    // ---- Time formatting ----
+    function formatToJST(dateStr) {
       if (!dateStr) return "N/A";
-      const estDate = new Date(dateStr);
-      if (isNaN(estDate)) return "Invalid Date";
-      // EST = UTC-5, JST = UTC+9 → difference = +14 hours
-      const jstDate = new Date(estDate.getTime() + 14 * 60 * 60 * 1000);
-      return jstDate.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+      const date = new Date(dateStr);
+      if (isNaN(date)) return "Invalid Date";
+      return new Intl.DateTimeFormat("ja-JP", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
     }
 
-    // Job cards
+    // ---- Job cards ----
     const jobCards = jobs.map(job => `
       <div class="job-card">
         <div class="job-header">
@@ -596,23 +616,37 @@ app.get('/view', async (req, res) => {
         <div class="job-footer">
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
-          <p>Posted: ${convertESTtoJST(job.postedtime)}</p>
+          <p>Posted: ${formatToJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
 
-    // Pagination
+    // ---- Pagination (LinkedIn-style) ----
     let pagination = `<div class="pagination">`;
+
+    const pageRange = 5; // how many page numbers to show around current
+    const startPage = Math.max(1, page - pageRange);
+    const endPage = Math.min(totalPages, page + pageRange);
+
     if (page > 1) {
-      pagination += `<a href="/view?page=${page - 1}" class="btn">Previous</a>`;
+      pagination += `<a href="/view?page=${page - 1}" class="btn prev">« Prev</a>`;
     }
-    pagination += `<span> Page ${page} of ${totalPages} </span>`;
+
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === page) {
+        pagination += `<span class="current">${i}</span>`;
+      } else {
+        pagination += `<a href="/view?page=${i}" class="btn">${i}</a>`;
+      }
+    }
+
     if (page < totalPages) {
-      pagination += `<a href="/view?page=${page + 1}" class="btn">Next</a>`;
+      pagination += `<a href="/view?page=${page + 1}" class="btn next">Next »</a>`;
     }
+
     pagination += `</div>`;
 
-    // Render HTML
+    // ---- Full HTML ----
     const html = `
       <!DOCTYPE html>
       <html>
@@ -621,6 +655,7 @@ app.get('/view', async (req, res) => {
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
           .container { max-width: 900px; margin: 20px auto; padding: 10px; }
+          h1 { margin-bottom: 20px; }
           .job-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
           .job-header { display: flex; gap: 15px; align-items: center; }
           .company-logo { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
@@ -631,9 +666,27 @@ app.get('/view', async (req, res) => {
           .company a:hover { text-decoration: underline; }
           .industry { color: #777; font-size: 14px; }
           .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; gap: 20px; flex-wrap: wrap; }
+          
+          /* Pagination styles */
           .pagination { margin-top: 20px; text-align: center; }
-          .pagination .btn { padding: 8px 15px; margin: 0 5px; border: 1px solid #0073b1; border-radius: 4px; text-decoration: none; color: #0073b1; }
-          .pagination .btn:hover { background: #0073b1; color: white; }
+          .pagination .btn, .pagination .current {
+            display: inline-block;
+            padding: 8px 14px;
+            margin: 0 3px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #0073b1;
+          }
+          .pagination .btn:hover {
+            background: #0073b1;
+            color: white;
+          }
+          .pagination .current {
+            background: #0073b1;
+            color: white;
+            font-weight: bold;
+          }
         </style>
       </head>
       <body>
