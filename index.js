@@ -575,8 +575,8 @@ app.get('/view', async (req, res) => {
     // ---- Format EST & JST ----
     function formatEST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr);
-      return est.toFormat("yyyy/MM/dd HH:mm:ss");
+      const nyTime = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      return nyTime.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     function formatPST(dateStr) {
