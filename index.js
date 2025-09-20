@@ -557,6 +557,7 @@ app.get('/update', async (req, res) => {
 import { DateTime } from "luxon";
 
 app.get('/view', async (req, res) => {
+
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 100;
@@ -575,16 +576,14 @@ app.get('/view', async (req, res) => {
     // ---- Format EST & JST ----
     function formatEST(dateStr) {
       if (!dateStr) return "N/A";
-      const nyTime = DateTime.fromISO(dateStr, { zone: "America/New_York" });
-      return nyTime.toFormat("yyyy/MM/dd HH:mm:ss");
+      const dt = DateTime.fromISO(dateStr, { zone: "utc" });
+      return dt.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     function formatPST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
-      const pst = est.setZone("America/Los_Angeles"); // Convert to PST/PDT
-
-      return pst.toFormat("yyyy/MM/dd HH:mm:ss");
+      const nyTime = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      return nyTime.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     // ---- Job cards ----
@@ -607,7 +606,6 @@ app.get('/view', async (req, res) => {
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
           <p>Posted (EST): ${formatEST(job.postedtime)}</p>
-          <p>Posted (EST): ${formatPST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
