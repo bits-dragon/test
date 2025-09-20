@@ -552,21 +552,20 @@ app.get('/update', async (req, res) => {
   });
 })
 
-function formatToJST(dateStr) {
-  if (!dateStr) return "N/A";
-  const date = new Date(dateStr);
-  if (isNaN(date)) return "Invalid Date";
 
-  return new Intl.DateTimeFormat("ja-JP", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+function estToJst(dateStr) {
+  if (!dateStr) return "N/A";
+
+  // Parse given string as EST/EDT
+  const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+
+  // Convert to JST
+  const jst = est.setZone("Asia/Tokyo");
+
+  return jst.toFormat("yyyy/MM/dd HH:mm:ss");
 }
 
+import { DateTime } from "luxon";
 
 app.get('/view', async (req, res) => {
   try {
@@ -574,6 +573,7 @@ app.get('/view', async (req, res) => {
     const limit = 100;
     const skip = (page - 1) * limit;
 
+    // Fetch jobs
     const jobs = await Job.find()
       .sort({ postedtime: -1 })
       .skip(skip)
@@ -583,19 +583,12 @@ app.get('/view', async (req, res) => {
     const totalJobs = await Job.countDocuments();
     const totalPages = Math.ceil(totalJobs / limit);
 
-    // ---- Time formatting ----
-    function formatToJST(dateStr) {
+    // ---- Time formatter: EST → JST ----
+    function estToJst(dateStr) {
       if (!dateStr) return "N/A";
-      const date = new Date(dateStr);
-      if (isNaN(date)) return "Invalid Date";
-      return new Intl.DateTimeFormat("ja-JP", {
-        timeZone: "Asia/Tokyo",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(date);
+      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      const jst = est.setZone("Asia/Tokyo");
+      return jst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     // ---- Job cards ----
@@ -616,15 +609,15 @@ app.get('/view', async (req, res) => {
         <div class="job-footer">
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
-          <p>Posted: ${formatToJST(job.postedtime)}</p>
+          <p>Posted: ${estToJst(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
 
-    // ---- Pagination (LinkedIn-style) ----
+    // ---- Pagination ----
     let pagination = `<div class="pagination">`;
 
-    const pageRange = 5; // how many page numbers to show around current
+    const pageRange = 3; // how many pages to show around current
     const startPage = Math.max(1, page - pageRange);
     const endPage = Math.min(totalPages, page + pageRange);
 
@@ -646,7 +639,7 @@ app.get('/view', async (req, res) => {
 
     pagination += `</div>`;
 
-    // ---- Full HTML ----
+    // ---- HTML page ----
     const html = `
       <!DOCTYPE html>
       <html>
