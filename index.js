@@ -553,17 +553,6 @@ app.get('/update', async (req, res) => {
 })
 
 
-function estToJst(dateStr) {
-  if (!dateStr) return "N/A";
-
-  // Parse given string as EST/EDT
-  const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
-
-  // Convert to JST
-  const jst = est.setZone("Asia/Tokyo");
-
-  return jst.toFormat("yyyy/MM/dd HH:mm:ss");
-}
 
 import { DateTime } from "luxon";
 
@@ -586,13 +575,13 @@ app.get('/view', async (req, res) => {
     // ---- Format EST & JST ----
     function formatEST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      const est = DateTime.fromISO(dateStr);
       return est.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     function formatJST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      const est = DateTime.fromISO(dateStr);
       const jst = est.setZone("Asia/Tokyo");
       return jst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
