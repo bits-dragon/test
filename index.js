@@ -583,8 +583,14 @@ app.get('/view', async (req, res) => {
     const totalJobs = await Job.countDocuments();
     const totalPages = Math.ceil(totalJobs / limit);
 
-    // ---- Time formatter: EST → JST ----
-    function estToJst(dateStr) {
+    // ---- Format EST & JST ----
+    function formatEST(dateStr) {
+      if (!dateStr) return "N/A";
+      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      return est.toFormat("yyyy/MM/dd HH:mm:ss");
+    }
+
+    function formatJST(dateStr) {
       if (!dateStr) return "N/A";
       const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
       const jst = est.setZone("Asia/Tokyo");
@@ -604,12 +610,14 @@ app.get('/view', async (req, res) => {
               </a>
             </p>
             <p class="industry">${job.designation || 'Industry not found'}</p>
+            <p class="location">📍 ${job.location || 'Location not specified'}</p>
           </div>
         </div>
         <div class="job-footer">
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
-          <p>Posted: ${estToJst(job.postedtime)}</p>
+          <p>Posted (EST): ${formatEST(job.postedtime)}</p>
+          <p>Posted (JST): ${formatJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
@@ -617,7 +625,7 @@ app.get('/view', async (req, res) => {
     // ---- Pagination ----
     let pagination = `<div class="pagination">`;
 
-    const pageRange = 3; // how many pages to show around current
+    const pageRange = 3;
     const startPage = Math.max(1, page - pageRange);
     const endPage = Math.min(totalPages, page + pageRange);
 
@@ -658,6 +666,7 @@ app.get('/view', async (req, res) => {
           .company a { color: #555; text-decoration: none; }
           .company a:hover { text-decoration: underline; }
           .industry { color: #777; font-size: 14px; }
+          .location { color: #333; font-size: 14px; margin-top: 4px; }
           .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; gap: 20px; flex-wrap: wrap; }
           
           /* Pagination styles */
@@ -699,3 +708,4 @@ app.get('/view', async (req, res) => {
     res.status(500).send("<h1>Internal Server Error</h1>");
   }
 });
+
