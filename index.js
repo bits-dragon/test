@@ -22,10 +22,10 @@ const jobSchema = new mongoose.Schema({
   postedtime: String,
   postTime: String,
   designation: String,
-  followersCount: String,
+  followersCount: Number,
   location: String,
   companyLink: String,
-  postId: { type: String, required: true, unique: true },
+  postId: { type: Number, required: true, unique: true },
   companylog: String,
 }, { timestamps: true }); // adds createdAt and updatedAt
 
