@@ -19,6 +19,6 @@
     "socks-proxy-agent": "^8.0.5"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "nodemon index.js"
   }
 }

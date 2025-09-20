@@ -562,11 +562,20 @@ app.get('/view', async (req, res) => {
     const limit = 100;
     const skip = (page - 1) * limit;
 
-    // --- Employee count filter ---
+    // --- Filters ---
     const empMax = parseInt(req.query.emp) || null;
+    const companyQuery = req.query.company || "";
+    const titleQuery = req.query.title || "";
+
     let filter = {};
     if (empMax) {
-      filter = { e_count: { $gte: 1, $lte: empMax } };
+      filter.e_count = { $gte: 1, $lte: empMax };
+    }
+    if (companyQuery) {
+      filter.company = { $regex: companyQuery, $options: "i" };
+    }
+    if (titleQuery) {
+      filter.title = { $regex: titleQuery, $options: "i" };
     }
 
     // Fetch jobs
@@ -613,6 +622,7 @@ app.get('/view', async (req, res) => {
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
           <p>Posted (EST): ${formatEST(job.postedtime)}</p>
+          <p>Posted (JST): ${formatJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
@@ -621,11 +631,11 @@ app.get('/view', async (req, res) => {
     let pagination = `<div class="pagination">`;
 
     if (page > 1) {
-      pagination += `<a href="/view?page=${page - 1}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">« Prev</a>`;
+      pagination += `<a href="/view?page=${page - 1}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">« Prev</a>`;
     }
 
     if (page > 3) {
-      pagination += `<a href="/view?page=1${empMax ? `&emp=${empMax}` : ""}" class="page-btn">1</a>`;
+      pagination += `<a href="/view?page=1&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">1</a>`;
       if (page > 4) {
         pagination += `<span class="ellipsis">...</span>`;
       }
@@ -638,7 +648,7 @@ app.get('/view', async (req, res) => {
       if (i === page) {
         pagination += `<span class="page-btn active">${i}</span>`;
       } else {
-        pagination += `<a href="/view?page=${i}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">${i}</a>`;
+        pagination += `<a href="/view?page=${i}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">${i}</a>`;
       }
     }
 
@@ -646,11 +656,11 @@ app.get('/view', async (req, res) => {
       if (page < totalPages - 3) {
         pagination += `<span class="ellipsis">...</span>`;
       }
-      pagination += `<a href="/view?page=${totalPages}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">${totalPages}</a>`;
+      pagination += `<a href="/view?page=${totalPages}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">${totalPages}</a>`;
     }
 
     if (page < totalPages) {
-      pagination += `<a href="/view?page=${page + 1}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">Next »</a>`;
+      pagination += `<a href="/view?page=${page + 1}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">Next »</a>`;
     }
 
     pagination += `</div>`;
@@ -664,34 +674,36 @@ app.get('/view', async (req, res) => {
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
           .container { max-width: 900px; margin: 20px auto; padding: 10px; }
-          h1 { margin-bottom: 10px; }
+          h1 { margin-bottom: 15px; }
 
           /* Search Bar */
           form.search-bar {
             margin-bottom: 25px;
             display: flex;
-            align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
+            background: #fff;
+            padding: 12px 15px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
-          form.search-bar label {
-            font-weight: bold;
-            color: #444;
-            font-size: 14px;
-          }
-          form.search-bar input[type="number"] {
+          form.search-bar input[type="number"],
+          form.search-bar input[type="text"] {
+            flex: 1;
+            min-width: 160px;
             padding: 10px 15px;
             border: 1px solid #ccc;
             border-radius: 25px;
-            width: 200px;
             font-size: 14px;
             outline: none;
-            transition: border 0.2s;
+            transition: border 0.2s, box-shadow 0.2s;
           }
-          form.search-bar input[type="number"]:focus {
+          form.search-bar input:focus {
             border: 1px solid #0073b1;
+            box-shadow: 0 0 4px rgba(0,115,177,0.3);
           }
           form.search-bar button {
-            padding: 10px 18px;
+            padding: 10px 20px;
             border: none;
             border-radius: 25px;
             background: #0073b1;
@@ -704,16 +716,16 @@ app.get('/view', async (req, res) => {
             background: #005f8c;
           }
           form.search-bar a.clear-btn {
-            padding: 10px 18px;
+            padding: 10px 20px;
             border-radius: 25px;
-            background: #ccc;
-            color: #333;
+            background: #eee;
+            color: #555;
             font-size: 14px;
             text-decoration: none;
             transition: background 0.2s ease;
           }
           form.search-bar a.clear-btn:hover {
-            background: #aaa;
+            background: #ddd;
           }
 
           /* Job cards */
@@ -766,10 +778,11 @@ app.get('/view', async (req, res) => {
 
           <!-- Search bar -->
           <form class="search-bar" method="get" action="/view">
-            <label for="emp">Max Employees:</label>
-            <input type="number" id="emp" name="emp" value="${empMax || ""}" min="1" placeholder="e.g. 50" />
+            <input type="number" id="emp" name="emp" value="${empMax || ""}" min="1" placeholder="Max Employees (e.g. 50)" />
+            <input type="text" id="company" name="company" value="${companyQuery}" placeholder="Search by Company" />
+            <input type="text" id="title" name="title" value="${titleQuery}" placeholder="Search by Title" />
             <button type="submit">Search</button>
-            ${empMax ? `<a href="/view" class="clear-btn">Clear</a>` : ""}
+            ${(empMax || companyQuery || titleQuery) ? `<a href="/view" class="clear-btn">Clear</a>` : ""}
           </form>
 
           ${jobCards || "<p>No jobs found.</p>"}
