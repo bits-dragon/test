@@ -554,12 +554,11 @@ app.get('/update', async (req, res) => {
 
 app.get('/view', async (req, res) => {
   try {
-    // Get page number from query (default 1 if not provided)
     const page = parseInt(req.query.page) || 1;
     const limit = 100;
     const skip = (page - 1) * limit;
 
-    // Fetch jobs from DB
+    // Fetch jobs with pagination
     const jobs = await Job.find()
       .sort({ postedtime: -1 })
       .skip(skip)
@@ -569,25 +568,40 @@ app.get('/view', async (req, res) => {
     const totalJobs = await Job.countDocuments();
     const totalPages = Math.ceil(totalJobs / limit);
 
-    // Generate job cards
+    // Helper: convert EST → JST
+    function convertESTtoJST(dateStr) {
+      if (!dateStr) return "N/A";
+      const estDate = new Date(dateStr);
+      if (isNaN(estDate)) return "Invalid Date";
+      // EST = UTC-5, JST = UTC+9 → difference = +14 hours
+      const jstDate = new Date(estDate.getTime() + 14 * 60 * 60 * 1000);
+      return jstDate.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+    }
+
+    // Job cards
     const jobCards = jobs.map(job => `
       <div class="job-card">
         <div class="job-header">
           <img src="${job.companylog || 'https://via.placeholder.com/50'}" alt="Logo" class="company-logo"/>
           <div>
             <h3><a href="${job.joblink}" target="_blank">${job.title || 'Untitled'}</a></h3>
-            <p class="company">${job.company || 'Unknown Company'}</p>
-            <p class="location">${job.location || ''}</p>
+            <p class="company">
+              <a href="${job.companyLink || '#'}" target="_blank">
+                ${job.company || 'Unknown Company'}
+              </a>
+            </p>
+            <p class="industry">${job.designation || 'Industry not found'}</p>
           </div>
         </div>
         <div class="job-footer">
-          <p>Posted: ${job.postedtime ? new Date(job.postedtime).toLocaleString() : 'N/A'}</p>
-          ${job.companyLink ? `<a href="${job.companyLink}" target="_blank">Company Profile</a>` : ''}
+          <p>Employees: ${job.e_count || 'N/A'}</p>
+          <p>Followers: ${job.followersCount || 'N/A'}</p>
+          <p>Posted: ${convertESTtoJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
 
-    // Pagination controls
+    // Pagination
     let pagination = `<div class="pagination">`;
     if (page > 1) {
       pagination += `<a href="/view?page=${page - 1}" class="btn">Previous</a>`;
@@ -598,12 +612,12 @@ app.get('/view', async (req, res) => {
     }
     pagination += `</div>`;
 
-    // Full HTML response
+    // Render HTML
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Jobs - Page ${page}</title>
+        <title>Job Listings - Page ${page}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
           .container { max-width: 900px; margin: 20px auto; padding: 10px; }
@@ -613,9 +627,10 @@ app.get('/view', async (req, res) => {
           h3 { margin: 0; font-size: 18px; }
           h3 a { text-decoration: none; color: #0073b1; }
           h3 a:hover { text-decoration: underline; }
-          .company { color: #555; margin: 3px 0; }
-          .location { color: #777; font-size: 14px; }
-          .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; justify-content: space-between; }
+          .company a { color: #555; text-decoration: none; }
+          .company a:hover { text-decoration: underline; }
+          .industry { color: #777; font-size: 14px; }
+          .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; gap: 20px; flex-wrap: wrap; }
           .pagination { margin-top: 20px; text-align: center; }
           .pagination .btn { padding: 8px 15px; margin: 0 5px; border: 1px solid #0073b1; border-radius: 4px; text-decoration: none; color: #0073b1; }
           .pagination .btn:hover { background: #0073b1; color: white; }
