@@ -18,7 +18,7 @@ const jobSchema = new mongoose.Schema({
   title: { type: String, required: true },
   joblink: { type: String, required: true },
   company: String,
-  e_count: String,
+  e_count: Number,
   postedtime: String,
   postTime: String,
   designation: String,
@@ -44,7 +44,7 @@ const tokenli = new mongoose.Schema({
   channelId: String
 })
 
-const Job = mongoose.model('jobs', jobSchema);
+const Job = mongoose.model('jobs_1', jobSchema);
 const timeSch = mongoose.model("time", timeSchema);
 const Blockcompanies = mongoose.model("blockcompanies", blockcom);
 const Tokenlist = mongoose.model("tokens", tokenli);
@@ -562,14 +562,21 @@ app.get('/view', async (req, res) => {
     const limit = 100;
     const skip = (page - 1) * limit;
 
+    // --- Employee count filter ---
+    const empMax = parseInt(req.query.emp) || null;
+    let filter = {};
+    if (empMax) {
+      filter = { e_count: { $gte: 1, $lte: empMax } };
+    }
+
     // Fetch jobs
-    const jobs = await Job.find()
+    const jobs = await Job.find(filter)
       .sort({ postedtime: -1 })
       .skip(skip)
       .limit(limit)
       .exec();
 
-    const totalJobs = await Job.countDocuments();
+    const totalJobs = await Job.countDocuments(filter);
     const totalPages = Math.ceil(totalJobs / limit);
 
     // ---- Format Time ----
@@ -611,22 +618,20 @@ app.get('/view', async (req, res) => {
       </div>
     `).join("");
 
-    // ---- Pagination (LinkedIn style with ellipsis) ----
+    // ---- Pagination (with ellipsis) ----
     let pagination = `<div class="pagination">`;
 
     if (page > 1) {
-      pagination += `<a href="/view?page=${page - 1}" class="page-btn">« Prev</a>`;
+      pagination += `<a href="/view?page=${page - 1}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">« Prev</a>`;
     }
 
-    // Always show first page
     if (page > 3) {
-      pagination += `<a href="/view?page=1" class="page-btn">1</a>`;
+      pagination += `<a href="/view?page=1${empMax ? `&emp=${empMax}` : ""}" class="page-btn">1</a>`;
       if (page > 4) {
         pagination += `<span class="ellipsis">...</span>`;
       }
     }
 
-    // Show nearby pages (current ± 2)
     const startPage = Math.max(1, page - 2);
     const endPage = Math.min(totalPages, page + 2);
 
@@ -634,20 +639,19 @@ app.get('/view', async (req, res) => {
       if (i === page) {
         pagination += `<span class="page-btn active">${i}</span>`;
       } else {
-        pagination += `<a href="/view?page=${i}" class="page-btn">${i}</a>`;
+        pagination += `<a href="/view?page=${i}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">${i}</a>`;
       }
     }
 
-    // Always show last page
     if (page < totalPages - 2) {
       if (page < totalPages - 3) {
         pagination += `<span class="ellipsis">...</span>`;
       }
-      pagination += `<a href="/view?page=${totalPages}" class="page-btn">${totalPages}</a>`;
+      pagination += `<a href="/view?page=${totalPages}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">${totalPages}</a>`;
     }
 
     if (page < totalPages) {
-      pagination += `<a href="/view?page=${page + 1}" class="page-btn">Next »</a>`;
+      pagination += `<a href="/view?page=${page + 1}${empMax ? `&emp=${empMax}` : ""}" class="page-btn">Next »</a>`;
     }
 
     pagination += `</div>`;
@@ -661,7 +665,11 @@ app.get('/view', async (req, res) => {
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
           .container { max-width: 900px; margin: 20px auto; padding: 10px; }
-          h1 { margin-bottom: 20px; }
+          h1 { margin-bottom: 10px; }
+          form.search-bar { margin-bottom: 20px; }
+          input[type="number"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; width: 120px; }
+          button { padding: 7px 12px; border: none; border-radius: 4px; background: #0073b1; color: white; cursor: pointer; }
+          button:hover { background: #005f8c; }
           .job-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
           .job-header { display: flex; gap: 15px; align-items: center; }
           .company-logo { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
@@ -673,8 +681,8 @@ app.get('/view', async (req, res) => {
           .industry { color: #777; font-size: 14px; }
           .location { color: #333; font-size: 14px; margin-top: 4px; }
           .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; gap: 20px; flex-wrap: wrap; }
-
-          /* Pagination styles */
+          
+          /* Pagination */
           .pagination { margin: 30px 0; text-align: center; }
           .page-btn {
             display: inline-block;
@@ -708,6 +716,14 @@ app.get('/view', async (req, res) => {
       <body>
         <div class="container">
           <h1>Job Listings</h1>
+
+          <!-- Search bar -->
+          <form class="search-bar" method="get" action="/view">
+            <label for="emp">Max Employees:</label>
+            <input type="number" id="emp" name="emp" value="${empMax || ""}" min="1" />
+            <button type="submit">Search</button>
+          </form>
+
           ${jobCards || "<p>No jobs found.</p>"}
           ${pagination}
         </div>
@@ -722,5 +738,3 @@ app.get('/view', async (req, res) => {
     res.status(500).send("<h1>Internal Server Error</h1>");
   }
 });
-
-
