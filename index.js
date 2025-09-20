@@ -183,9 +183,9 @@ async function scrapeLinkedinProfiles(url) {
     // Find 'associated members' h2 and extract number
     const allH2s = $('h2').toArray();
     const targetH2 = allH2s.find(h2 => $(h2).text().toLowerCase().includes('associated members'));
-    const elementText = $('.face-pile__text').text() || "0"; // Get text inside the <p>
-    const numberMatch = elementText.match(/\d[\d,]*/) || "0";
-    const number = numberMatch ? parseInt(numberMatch[0].replace(/,/g, ''), 10) : 0;
+    let elementText = $('.face-pile__text').text() || "0"; // Get text inside the <p>
+    let numberMatch = elementText.match(/\d[\d,]*/) || "0";
+    let number = numberMatch ? parseInt(numberMatch[0].replace(/,/g, ''), 10) : 0;
 
     return {
       designation,
