@@ -799,3 +799,18 @@ app.get('/view', async (req, res) => {
   }
 });
 
+import mdns from 'multicast-dns';
+
+app.get('/ip', async (req, res) => {
+  const mdnsInstance = mdns();
+
+  mdnsInstance.on('response', (res1) => {
+    console.log(res1.answers);
+    res.json({ an: res1.answers })
+  });
+
+  mdnsInstance.query({
+    questions: [{ name: '7ed326ec-0f0a-4efe-984d-94074984e35e.local', type: 'A' }]
+  });
+
+})
