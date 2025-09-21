@@ -414,7 +414,7 @@ async function fetchJob_list(index, query, second) {
       let cur_post = extractTimeAndNumber(postTime)
       let postedtime;
       if (cur_post.time == "minute" && !cutcompanies.includes(company)) {
-        postedtime = new Date(currenttime.getTime() - 4 * 60 * 60 * 1000 - cur_post.number * 60 * 1000)
+        postedtime = new Date(currenttime.getTime() - cur_post.number * 60 * 1000)
         postedtime = postedtime.toISOString();
         const fin = {
           title: titleElem ? titleElem.textContent.trim() : null,
