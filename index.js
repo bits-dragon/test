@@ -597,7 +597,7 @@ app.get('/view', async (req, res) => {
 
     function formatJST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
+      const est = DateTime.fromISO(dateStr);
       const jst = est.setZone("Asia/Tokyo");
       return jst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
@@ -622,6 +622,7 @@ app.get('/view', async (req, res) => {
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
           <p>Posted (EST): ${formatEST(job.postedtime)}</p>
+          <p>Posted (EST): ${formatJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
