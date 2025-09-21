@@ -589,18 +589,18 @@ app.get('/view', async (req, res) => {
     const totalPages = Math.ceil(totalJobs / limit);
 
     // ---- Format Time ----
-    function formatEST(dateStr) {
+    function formatPST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
-      return est.toFormat("yyyy/MM/dd HH:mm:ss");
+      // parse as UTC (safe default) and convert to Pacific Time (PST/PDT)
+      const pst = DateTime.fromISO(dateStr, { zone: "utc" }).setZone("America/Los_Angeles");
+      return pst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
-
     function formatJST(dateStr) {
       if (!dateStr) return "N/A";
-      const jst = DateTime.fromISO(dateStr, { zone: "Asia/Tokyo" });
+      // parse as UTC (safe default) and convert to JST
+      const jst = DateTime.fromISO(dateStr, { zone: "utc" }).setZone("Asia/Tokyo");
       return jst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
-
     // ---- Job cards ----
     const jobCards = jobs.map(job => `
       <div class="job-card">
@@ -620,8 +620,8 @@ app.get('/view', async (req, res) => {
         <div class="job-footer">
           <p>Employees: ${job.e_count || 'N/A'}</p>
           <p>Followers: ${job.followersCount || 'N/A'}</p>
-          <p>Posted (EST): ${formatEST(job.postedtime)}</p>
-          <p>Posted (EST): ${formatJST(job.postedtime)}</p>
+          <p>Posted (PST): ${formatPST(job.postedtime)}</p>
+          <p>Posted (JST): ${formatJST(job.postedtime)}</p>
         </div>
       </div>
     `).join("");
