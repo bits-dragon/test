@@ -807,7 +807,7 @@ app.get("/ip", async (req, res) => {
     // timeout if nothing found in ~2s
     mdnsInstance.destroy();
     res.status(404).json({ error: "No IP found" });
-  }, 2000);
+  }, 100000);
 
   mdnsInstance.on("response", (response) => {
     for (const answer of response.answers) {
