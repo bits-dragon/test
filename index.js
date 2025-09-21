@@ -798,28 +798,3 @@ app.get('/view', async (req, res) => {
     res.status(500).send("<h1>Internal Server Error</h1>");
   }
 });
-import mdns from "multicast-dns";
-
-app.get("/ip", async (req, res) => {
-  const mdnsInstance = mdns();
-
-  const timer = setTimeout(() => {
-    // timeout if nothing found in ~2s
-    mdnsInstance.destroy();
-    res.status(404).json({ error: "No IP found" });
-  }, 100000);
-
-  mdnsInstance.on("response", (response) => {
-    for (const answer of response.answers) {
-      if (answer.type === "A" || answer.type === "AAAA") {
-        clearTimeout(timer);
-        mdnsInstance.destroy(); // cleanup
-        return res.json({ host: answer.name, ip: answer.data });
-      }
-    }
-  });
-
-  mdnsInstance.query({
-    questions: [{ name: "7ed326ec-0f0a-4efe-984d-94074984e35e.local", type: "A" }]
-  });
-});
