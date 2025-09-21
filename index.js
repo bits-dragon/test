@@ -315,7 +315,7 @@ function parsePostTimeToMinutes(postTime) {
   }
   return Infinity;
 }
-
+//https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/4303562852
 async function fetchJob_list(index, query, second) {
   let headers = {
     "User-Agent": userAgents[Math.floor(Math.random() * userAgents.length)],
@@ -542,8 +542,8 @@ app.get('/update', async (req, res) => {
   const start = Date.now();
   let jobs1 = [];
   let query = req.query.q || ""
-  let second = req.query.n || 300
-  jobs1 = await fetchAndParseJobs(query, second);
+  let minute = req.query.n || 5 * 60
+  jobs1 = await fetchAndParseJobs(query, minute * 60);
   const end = Date.now();
   res.json({
     count: jobs1.length || 0,
