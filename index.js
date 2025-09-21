@@ -591,14 +591,13 @@ app.get('/view', async (req, res) => {
     // ---- Format Time ----
     function formatEST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr);
+      const est = DateTime.fromISO(dateStr, { zone: "America/New_York" });
       return est.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
     function formatJST(dateStr) {
       if (!dateStr) return "N/A";
-      const est = DateTime.fromISO(dateStr);
-      const jst = est.setZone("Asia/Tokyo");
+      const jst = DateTime.fromISO(dateStr, { zone: "Asia/Tokyo" });
       return jst.toFormat("yyyy/MM/dd HH:mm:ss");
     }
 
