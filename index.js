@@ -669,7 +669,7 @@ app.get('/view', async (req, res) => {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Job Listings - Page ${page}</title>
+        <title>Let's kill baby - round ${page}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
           .container { max-width: 900px; margin: 20px auto; padding: 10px; }
