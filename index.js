@@ -561,6 +561,11 @@ app.get('/view', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 100;
     const skip = (page - 1) * limit;
+    const lastday = parseInt(req.query.lastday) || 0;
+    let lastdate = new Date();
+    if (lastday != 0) {
+      lastdate = new Date(Date.now() - (lastday * 24 * 60 * 60 * 1000));
+    }
 
     // --- Filters ---
     const empMax = parseInt(req.query.emp) || null;
@@ -568,15 +573,10 @@ app.get('/view', async (req, res) => {
     const titleQuery = req.query.title || "";
 
     let filter = {};
-    if (empMax) {
-      filter.e_count = { $gte: 1, $lte: empMax };
-    }
-    if (companyQuery) {
-      filter.company = { $regex: companyQuery, $options: "i" };
-    }
-    if (titleQuery) {
-      filter.title = { $regex: titleQuery, $options: "i" };
-    }
+    if (empMax) filter.e_count = { $gte: 1, $lte: empMax };
+    if (companyQuery) filter.company = { $regex: companyQuery, $options: "i" };
+    if (titleQuery) filter.title = { $regex: titleQuery, $options: "i" };
+    if (lastday != 0) filter.postedtime = { $gte: lastdate.toISOString() };
 
     // Fetch jobs
     const jobs = await Job.find(filter)
@@ -589,18 +589,16 @@ app.get('/view', async (req, res) => {
     const totalPages = Math.ceil(totalJobs / limit);
 
     // ---- Format Time ----
-    function formatPST(dateStr) {
+    const formatPST = (dateStr) => {
       if (!dateStr) return "N/A";
-      // parse as UTC (safe default) and convert to Pacific Time (PST/PDT)
-      const pst = DateTime.fromISO(dateStr, { zone: "utc" }).setZone("America/Los_Angeles");
-      return pst.toFormat("yyyy/MM/dd HH:mm:ss");
-    }
-    function formatJST(dateStr) {
+      return DateTime.fromISO(dateStr, { zone: "utc" }).setZone("America/Los_Angeles").toFormat("yyyy/MM/dd HH:mm:ss");
+    };
+
+    const formatJST = (dateStr) => {
       if (!dateStr) return "N/A";
-      // parse as UTC (safe default) and convert to JST
-      const jst = DateTime.fromISO(dateStr, { zone: "utc" }).setZone("Asia/Tokyo");
-      return jst.toFormat("yyyy/MM/dd HH:mm:ss");
-    }
+      return DateTime.fromISO(dateStr, { zone: "utc" }).setZone("Asia/Tokyo").toFormat("yyyy/MM/dd HH:mm:ss");
+    };
+
     // ---- Job cards ----
     const jobCards = jobs.map(job => `
       <div class="job-card">
@@ -608,11 +606,7 @@ app.get('/view', async (req, res) => {
           <img src="${job.companylog || 'https://via.placeholder.com/50'}" alt="Logo" class="company-logo"/>
           <div>
             <h3><a href="${job.joblink}" target="_blank">${job.title || 'Untitled'}</a></h3>
-            <p class="company">
-              <a href="${job.companyLink || '#'}" target="_blank">
-                ${job.company || 'Unknown Company'}
-              </a>
-            </p>
+            <p class="company"><a href="${job.companyLink || '#'}" target="_blank">${job.company || 'Unknown Company'}</a></p>
             <p class="industry">${job.designation || 'Industry not found'}</p>
             <p class="location">📍 ${job.location || 'Location not specified'}</p>
           </div>
@@ -626,41 +620,32 @@ app.get('/view', async (req, res) => {
       </div>
     `).join("");
 
-    // ---- Pagination (with ellipsis) ----
+    // ---- Pagination ----
     let pagination = `<div class="pagination">`;
 
-    if (page > 1) {
-      pagination += `<a href="/view?page=${page - 1}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">« Prev</a>`;
-    }
+    if (page > 1)
+      pagination += `<a href="/view?page=${page-1}&emp=${empMax||""}&company=${companyQuery}&title=${titleQuery}&lastday=${lastday}" class="page-btn">« Prev</a>`;
 
     if (page > 3) {
-      pagination += `<a href="/view?page=1&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">1</a>`;
-      if (page > 4) {
-        pagination += `<span class="ellipsis">...</span>`;
-      }
+      pagination += `<a href="/view?page=1&emp=${empMax||""}&company=${companyQuery}&title=${titleQuery}&lastday=${lastday}" class="page-btn">1</a>`;
+      if (page > 4) pagination += `<span class="ellipsis">...</span>`;
     }
 
     const startPage = Math.max(1, page - 2);
     const endPage = Math.min(totalPages, page + 2);
 
     for (let i = startPage; i <= endPage; i++) {
-      if (i === page) {
-        pagination += `<span class="page-btn active">${i}</span>`;
-      } else {
-        pagination += `<a href="/view?page=${i}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">${i}</a>`;
-      }
+      if (i === page) pagination += `<span class="page-btn active">${i}</span>`;
+      else pagination += `<a href="/view?page=${i}&emp=${empMax||""}&company=${companyQuery}&title=${titleQuery}&lastday=${lastday}" class="page-btn">${i}</a>`;
     }
 
     if (page < totalPages - 2) {
-      if (page < totalPages - 3) {
-        pagination += `<span class="ellipsis">...</span>`;
-      }
-      pagination += `<a href="/view?page=${totalPages}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">${totalPages}</a>`;
+      if (page < totalPages - 3) pagination += `<span class="ellipsis">...</span>`;
+      pagination += `<a href="/view?page=${totalPages}&emp=${empMax||""}&company=${companyQuery}&title=${titleQuery}&lastday=${lastday}" class="page-btn">${totalPages}</a>`;
     }
 
-    if (page < totalPages) {
-      pagination += `<a href="/view?page=${page + 1}&emp=${empMax || ""}&company=${companyQuery}&title=${titleQuery}" class="page-btn">Next »</a>`;
-    }
+    if (page < totalPages)
+      pagination += `<a href="/view?page=${page+1}&emp=${empMax||""}&company=${companyQuery}&title=${titleQuery}&lastday=${lastday}" class="page-btn">Next »</a>`;
 
     pagination += `</div>`;
 
@@ -669,65 +654,20 @@ app.get('/view', async (req, res) => {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Let's kill baby - round ${page}</title>
+        <title>Job Listings - Page ${page}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
-          .container { max-width: 900px; margin: 20px auto; padding: 10px; }
+          .container { max-width: 50%; margin: 20px auto; padding: 10px; }
           h1 { margin-bottom: 15px; }
 
-          /* Search Bar */
-          form.search-bar {
-            margin-bottom: 25px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            background: #fff;
-            padding: 12px 15px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          }
-          form.search-bar input[type="number"],
-          form.search-bar input[type="text"] {
-            flex: 1;
-            min-width: 160px;
-            padding: 10px 15px;
-            border: 1px solid #ccc;
-            border-radius: 25px;
-            font-size: 14px;
-            outline: none;
-            transition: border 0.2s, box-shadow 0.2s;
-          }
-          form.search-bar input:focus {
-            border: 1px solid #0073b1;
-            box-shadow: 0 0 4px rgba(0,115,177,0.3);
-          }
-          form.search-bar button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 25px;
-            background: #0073b1;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-          }
-          form.search-bar button:hover {
-            background: #005f8c;
-          }
-          form.search-bar a.clear-btn {
-            padding: 10px 20px;
-            border-radius: 25px;
-            background: #eee;
-            color: #555;
-            font-size: 14px;
-            text-decoration: none;
-            transition: background 0.2s ease;
-          }
-          form.search-bar a.clear-btn:hover {
-            background: #ddd;
-          }
+          form.search-bar { margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 10px; background: #fff; padding: 12px 15px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+          form.search-bar input, form.search-bar select { flex: 1; min-width: 160px; padding: 10px 15px; border: 1px solid #ccc; border-radius: 25px; font-size: 14px; outline: none; transition: border 0.2s, box-shadow 0.2s; }
+          form.search-bar input:focus, form.search-bar select:focus { border: 1px solid #0073b1; box-shadow: 0 0 4px rgba(0,115,177,0.3); }
+          form.search-bar button { padding: 10px 20px; border: none; border-radius: 25px; background: #0073b1; color: white; font-size: 14px; cursor: pointer; transition: background 0.2s ease; }
+          form.search-bar button:hover { background: #005f8c; }
+          form.search-bar a.clear-btn { padding: 10px 20px; border-radius: 25px; background: #eee; color: #555; font-size: 14px; text-decoration: none; transition: background 0.2s ease; }
+          form.search-bar a.clear-btn:hover { background: #ddd; }
 
-          /* Job cards */
           .job-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
           .job-header { display: flex; gap: 15px; align-items: center; }
           .company-logo { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
@@ -740,51 +680,36 @@ app.get('/view', async (req, res) => {
           .location { color: #333; font-size: 14px; margin-top: 4px; }
           .job-footer { margin-top: 10px; font-size: 13px; color: #666; display: flex; gap: 20px; flex-wrap: wrap; }
 
-          /* Pagination */
           .pagination { margin: 30px 0; text-align: center; }
-          .page-btn {
-            display: inline-block;
-            padding: 8px 14px;
-            margin: 0 4px;
-            border-radius: 20px;
-            border: 1px solid #0073b1;
-            text-decoration: none;
-            color: #0073b1;
-            font-size: 14px;
-            transition: all 0.2s ease;
-          }
-          .page-btn:hover {
-            background: #0073b1;
-            color: white;
-          }
-          .page-btn.active {
-            background: #0073b1;
-            color: white;
-            font-weight: bold;
-            cursor: default;
-          }
-          .ellipsis {
-            display: inline-block;
-            margin: 0 6px;
-            color: #999;
-            font-size: 14px;
-          }
+          .page-btn { display: inline-block; padding: 8px 14px; margin: 0 4px; border-radius: 20px; border: 1px solid #0073b1; text-decoration: none; color: #0073b1; font-size: 14px; transition: all 0.2s ease; }
+          .page-btn:hover { background: #0073b1; color: white; }
+          .page-btn.active { background: #0073b1; color: white; font-weight: bold; cursor: default; }
+          .ellipsis { display: inline-block; margin: 0 6px; color: #999; font-size: 14px; }
         </style>
       </head>
       <body>
         <div class="container">
-          <h1>Job Listings</h1>
+          <h1>Kill Everyone</h1>
 
-          <!-- Search bar -->
           <form class="search-bar" method="get" action="/view">
             <input type="number" id="emp" name="emp" value="${empMax || ""}" min="1" placeholder="Max Employees (e.g. 50)" />
             <input type="text" id="company" name="company" value="${companyQuery}" placeholder="Search by Company" />
             <input type="text" id="title" name="title" value="${titleQuery}" placeholder="Search by Title" />
+            <select id="lastday" name="lastday">
+              <option value="0" ${lastday==0?"selected":""}>All time</option>
+              <option value="1" ${lastday==1?"selected":""}>Last 1 day</option>
+              <option value="2" ${lastday==2?"selected":""}>Last 2 days</option>
+              <option value="3" ${lastday==3?"selected":""}>Last 3 days</option>
+              <option value="4" ${lastday==4?"selected":""}>Last 4 days</option>
+              <option value="5" ${lastday==5?"selected":""}>Last 5 days</option>
+              <option value="6" ${lastday==6?"selected":""}>Last 6 days</option>
+              <option value="7" ${lastday==7?"selected":""}>Last 7 days</option>
+            </select>
             <button type="submit">Search</button>
-            ${(empMax || companyQuery || titleQuery) ? `<a href="/view" class="clear-btn">Clear</a>` : ""}
+            ${(empMax || companyQuery || titleQuery || lastday!=0) ? `<a href="/view" class="clear-btn">Clear</a>` : ""}
           </form>
 
-          ${jobCards || "<p>No jobs found.</p>"}
+          ${jobCards}
           ${pagination}
         </div>
       </body>
@@ -794,7 +719,8 @@ app.get('/view', async (req, res) => {
     res.send(html);
 
   } catch (error) {
-    console.error("Error rendering jobs:", error);
-    res.status(500).send("<h1>Internal Server Error</h1>");
+    console.error(error);
+    res.status(500).send("Internal Server Error");
   }
 });
+
