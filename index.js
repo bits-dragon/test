@@ -657,7 +657,7 @@ app.get('/view', async (req, res) => {
         <title>Job Listings - Page ${page}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
-          .container { max-width: 50%; margin: 20px auto; padding: 10px; }
+          .container { max-width: 55%; margin: 20px auto; padding: 10px; }
           h1 { margin-bottom: 15px; }
 
           form.search-bar { margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 10px; background: #fff; padding: 12px 15px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
