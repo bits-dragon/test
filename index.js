@@ -553,7 +553,6 @@ app.get('/update', async (req, res) => {
 })
 
 
-
 import { DateTime } from "luxon";
 
 app.get('/view', async (req, res) => {
@@ -658,7 +657,9 @@ app.get('/view', async (req, res) => {
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f2ef; }
           .container { max-width: 55%; margin: 20px auto; padding: 10px; }
-          h1 { margin-bottom: 15px; }
+          h1 { margin-bottom: 10px; }
+          
+          .total-count { font-size: 18px; font-weight: bold; color: #0073b1; margin-bottom: 15px; }
 
           form.search-bar { margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 10px; background: #fff; padding: 12px 15px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
           form.search-bar input, form.search-bar select { flex: 1; min-width: 160px; padding: 10px 15px; border: 1px solid #ccc; border-radius: 25px; font-size: 14px; outline: none; transition: border 0.2s, box-shadow 0.2s; }
@@ -689,7 +690,8 @@ app.get('/view', async (req, res) => {
       </head>
       <body>
         <div class="container">
-          <h1>Kill Everyone</h1>
+          <h1>Job Listings</h1>
+          <div class="total-count">Total Jobs: ${totalJobs}</div>
 
           <form class="search-bar" method="get" action="/view">
             <input type="number" id="emp" name="emp" value="${empMax || ""}" min="1" placeholder="Max Employees (e.g. 50)" />
